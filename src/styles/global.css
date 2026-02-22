@@ -12,6 +12,21 @@
   --color-accent: hsl(210, 30%, 50%);
   --color-border: hsl(210, 15%, 90%);
 
+  /* Gradient colors (animated background) */
+  --gradient-1: hsl(210, 70%, 91%);
+  --gradient-2: hsl(225, 65%, 93%);
+  --gradient-3: hsl(195, 75%, 89%);
+  --gradient-4: hsl(215, 80%, 88%);
+  --gradient-5: hsl(205, 60%, 92%);
+
+  /* Glassmorphism colors */
+  --nav-glass-bg: hsla(210, 25%, 96%, 0.85);
+  --nav-glass-hover: hsla(210, 20%, 92%, 0.8);
+  --tooltip-glass-bg: hsla(210, 25%, 97%, 0.92);
+  --tooltip-row-hover: hsla(210, 20%, 92%, 0.6);
+
+  color-scheme: light;
+
   /* Typography */
   --font-body: "Inter", "Söhne", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
@@ -68,6 +83,38 @@
 }
 
 /* ==========================================================================
+   Dark Mode
+   ========================================================================== */
+
+[data-theme="dark"] {
+  --color-bg: hsl(220, 20%, 10%);
+  --color-bg-elevated: hsl(220, 18%, 15%);
+  --color-text-primary: hsl(210, 20%, 88%);
+  --color-text-secondary: hsl(210, 12%, 60%);
+  --color-text-muted: hsl(210, 8%, 42%);
+  --color-accent: hsl(210, 70%, 65%);
+  --color-border: hsl(215, 18%, 22%);
+  --shadow-sm: 0 1px 2px hsla(220, 30%, 5%, 0.3);
+  --shadow-md: 0 4px 12px hsla(220, 30%, 5%, 0.45);
+  --shadow-lg: 0 8px 24px hsla(220, 30%, 5%, 0.55);
+
+  /* Gradient colors for dark mode */
+  --gradient-1: hsl(220, 38%, 9%);
+  --gradient-2: hsl(232, 32%, 12%);
+  --gradient-3: hsl(213, 45%, 8%);
+  --gradient-4: hsl(226, 36%, 11%);
+  --gradient-5: hsl(210, 28%, 10%);
+
+  /* Glassmorphism colors for dark mode */
+  --nav-glass-bg: hsla(220, 22%, 16%, 0.88);
+  --nav-glass-hover: hsla(220, 22%, 22%, 0.8);
+  --tooltip-glass-bg: hsla(220, 22%, 14%, 0.94);
+  --tooltip-row-hover: hsla(220, 22%, 22%, 0.6);
+
+  color-scheme: dark;
+}
+
+/* ==========================================================================
    Reset
    ========================================================================== */
 
@@ -94,14 +141,36 @@ body {
   line-height: var(--leading-relaxed);
   color: var(--color-text-primary);
   background: linear-gradient(
-    168deg,
-    hsl(210, 28%, 97%) 0%,
-    hsl(210, 20%, 98%) 40%,
-    hsl(216, 24%, 96%) 100%
+    135deg,
+    var(--gradient-1) 0%,
+    var(--gradient-2) 25%,
+    var(--gradient-3) 50%,
+    var(--gradient-4) 75%,
+    var(--gradient-5) 100%
   );
-  background-attachment: fixed;
+  background-size: 300% 300%;
+  animation: gradientFlow 18s ease infinite;
   min-height: 100dvh;
   overflow-x: hidden;
+}
+
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    animation: none;
+    background-size: 100% 100%;
+  }
 }
 
 img,
