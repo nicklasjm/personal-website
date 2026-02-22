@@ -2,6 +2,7 @@
 import ContactTooltip from "./ContactTooltip.astro";
 
 const currentPath = Astro.url.pathname;
+const isHome = currentPath === "/" || currentPath === "";
 
 const navLinks = [
   { href: "/feed", label: "Feed" },
@@ -11,6 +12,15 @@ const navLinks = [
 
 <nav class="nav nav-bar-enter" aria-label="Main navigation">
   <div class="nav-pill">
+    <a
+      href="/"
+      class:list={["nav-home", { "is-active": isHome }]}
+      aria-label="Home"
+    >
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+        <circle cx="9" cy="9" r="7.5" />
+      </svg>
+    </a>
     {
       navLinks.map((link) => (
         <a
@@ -37,9 +47,11 @@ const navLinks = [
   .nav {
     position: fixed;
     bottom: var(--nav-bottom-offset);
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
+    right: 0;
     z-index: 100;
+    display: grid;
+    place-items: center;
   }
 
   .nav-pill {
@@ -53,6 +65,36 @@ const navLinks = [
     border: 1px solid var(--color-border);
     border-radius: var(--radius-full);
     box-shadow: var(--shadow-md);
+  }
+
+  .nav-home {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    text-decoration: none;
+    transition:
+      background-color var(--duration-fast) var(--ease-out);
+  }
+
+  .nav-home svg circle {
+    stroke: var(--color-text-secondary);
+    stroke-width: 1.5;
+    fill: transparent;
+    transition:
+      fill var(--duration-fast) var(--ease-out),
+      stroke var(--duration-fast) var(--ease-out);
+  }
+
+  .nav-home:hover svg circle {
+    stroke: var(--color-text-primary);
+  }
+
+  .nav-home.is-active svg circle {
+    fill: var(--color-text-primary);
+    stroke: var(--color-text-primary);
   }
 
   .nav-link {
