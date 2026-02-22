@@ -1,0 +1,328 @@
+---
+import Base from "@/layouts/Base.astro";
+import Lightbox from "@/components/Lightbox.astro";
+import { getAllPosts, getPostBySlug, urlFor, getFileUrl } from "@/lib/sanity";
+import { renderPortableText } from "@/lib/portable-text";
+
+export async function getStaticPaths() {
+  const posts = await getAllPosts();
+  return posts.map((post) => ({
+    params: { slug: post.slug.current },
+  }));
+}
+
+const { slug } = Astro.params;
+const post = await getPostBySlug(slug!);
+
+if (!post) {
+  return Astro.redirect("/feed");
+}
+
+const date = new Date(post.publishedAt).toLocaleDateString("en-DK", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
+const bodyHtml = post.body ? renderPortableText(post.body) : "";
+
+const featuredImageUrl = post.featuredImage
+  ? urlFor(post.featuredImage).width(1200).auto("format").url()
+  : null;
+
+const featuredVideoUrl = post.featuredVideo?.asset?._ref
+  ? getFileUrl(post.featuredVideo.asset._ref)
+  : null;
+
+const videoPosterUrl = post.videoPoster
+  ? urlFor(post.videoPoster).width(1200).auto("format").url()
+  : null;
+---
+
+<Base
+  title={`${post.title} — Nicklas Jakobsen`}
+  description={post.excerpt || `${post.title} — ${post.category}`}
+>
+  <article class="post container">
+    <header class="post-header animate-in">
+      <a href="/feed" class="post-back">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="8" x2="4" y2="8" /><polyline points="8 4 4 8 8 12" />
+        </svg>
+        Back to feed
+      </a>
+
+      <div class="post-meta">
+        <span class="post-category">{post.category}</span>
+        <span class="post-date">{date}</span>
+      </div>
+
+      <h1 class="post-title">{post.title}</h1>
+
+      {post.externalLink && (
+        <a
+          href={post.externalLink}
+          class="post-external-link"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          View project &nearr;
+        </a>
+      )}
+    </header>
+
+    {
+      (featuredImageUrl || featuredVideoUrl) && (
+        <div class="post-featured animate-in">
+          {featuredVideoUrl ? (
+            <div class="video-wrapper">
+              <video
+                src={featuredVideoUrl}
+                poster={videoPosterUrl || undefined}
+                playsinline
+                preload="metadata"
+                class="video-element"
+                controls
+              >
+                <track kind="captions" />
+              </video>
+            </div>
+          ) : (
+            <img
+              src={featuredImageUrl!}
+              alt={post.featuredImage?.alt || post.title}
+              loading="eager"
+              decoding="async"
+              data-lightbox
+              data-lightbox-group="post"
+              data-lightbox-src={featuredImageUrl!}
+            />
+          )}
+        </div>
+      )
+    }
+
+    {
+      bodyHtml && (
+        <div class="post-body portable-text animate-in" set:html={bodyHtml} />
+      )
+    }
+  </article>
+
+  <Lightbox />
+</Base>
+
+<style>
+  .post {
+    padding-top: var(--space-3xl);
+    padding-bottom: calc(var(--nav-height) + var(--nav-bottom-offset) + var(--space-3xl));
+    max-width: 720px;
+  }
+
+  .post-header {
+    margin-bottom: var(--space-xl);
+  }
+
+  .post-back {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-xl);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .post-back:hover {
+    color: var(--color-text-primary);
+  }
+
+  .post-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-sm);
+  }
+
+  .post-category {
+    text-transform: capitalize;
+  }
+
+  .post-category::after {
+    content: "·";
+    margin-left: var(--space-sm);
+  }
+
+  .post-title {
+    font-size: var(--text-2xl);
+    font-weight: 600;
+    margin-bottom: var(--space-md);
+  }
+
+  .post-external-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-accent);
+    padding: 8px 16px;
+    border: 1px solid var(--color-accent);
+    border-radius: var(--radius-full);
+    transition:
+      background-color var(--duration-fast) var(--ease-out),
+      color var(--duration-fast) var(--ease-out);
+  }
+
+  .post-external-link:hover {
+    background: var(--color-accent);
+    color: white;
+  }
+
+  .post-featured {
+    margin-bottom: var(--space-2xl);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .post-featured img {
+    width: 100%;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+  }
+
+  .post-featured .video-wrapper {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .post-featured video {
+    width: 100%;
+    display: block;
+  }
+
+  .post-body {
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
+  }
+
+  /* Gallery grid within post body */
+  .post-body :global(.gallery-grid) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: var(--space-md);
+    margin-block: var(--space-xl);
+  }
+
+  .post-body :global(.gallery-item) {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  .post-body :global(.gallery-item img) {
+    width: 100%;
+    cursor: pointer;
+    transition: transform var(--duration-slow) var(--ease-out);
+  }
+
+  .post-body :global(.gallery-item img:hover) {
+    transform: scale(1.02);
+  }
+</style>
+
+<script>
+  // Re-initialize video players rendered through Portable Text
+  document.querySelectorAll<HTMLElement>(".post-body .video-player").forEach((player) => {
+    const video = player.querySelector<HTMLVideoElement>(".video-element");
+    const playBtn = player.querySelector<HTMLButtonElement>(".video-play-btn");
+    const muteBtn = player.querySelector<HTMLButtonElement>(".video-mute-btn");
+    const progressBar = player.querySelector<HTMLElement>(".video-progress-bar");
+    const progress = player.querySelector<HTMLElement>(".video-progress");
+    const playIcon = player.querySelector<SVGElement>(".play-icon");
+    const pauseIcon = player.querySelector<SVGElement>(".pause-icon");
+    const volumeWaves = player.querySelector<SVGElement>(".volume-waves");
+    const muteLine = player.querySelector<SVGElement>(".mute-line");
+
+    if (!video || !playBtn || !muteBtn || !progressBar || !progress) return;
+
+    function updatePlayIcon() {
+      if (video!.paused) {
+        playIcon!.style.display = "";
+        pauseIcon!.style.display = "none";
+      } else {
+        playIcon!.style.display = "none";
+        pauseIcon!.style.display = "";
+      }
+    }
+
+    playBtn.addEventListener("click", () => video.paused ? video.play() : video.pause());
+    video.addEventListener("click", () => video.paused ? video.play() : video.pause());
+    video.addEventListener("play", updatePlayIcon);
+    video.addEventListener("pause", updatePlayIcon);
+
+    video.addEventListener("timeupdate", () => {
+      if (video.duration) {
+        progressBar.style.width = `${(video.currentTime / video.duration) * 100}%`;
+      }
+    });
+
+    progress.addEventListener("click", (e) => {
+      const rect = progress.getBoundingClientRect();
+      video.currentTime = ((e.clientX - rect.left) / rect.width) * video.duration;
+    });
+
+    muteBtn.addEventListener("click", () => {
+      video.muted = !video.muted;
+      volumeWaves!.style.display = video.muted ? "none" : "";
+      muteLine!.style.display = video.muted ? "" : "none";
+    });
+  });
+
+  // Re-initialize carousels rendered through Portable Text
+  document.querySelectorAll<HTMLElement>(".post-body .carousel").forEach((carousel) => {
+    const track = carousel.querySelector<HTMLElement>(".carousel-track");
+    const slides = carousel.querySelectorAll<HTMLElement>(".carousel-slide");
+    const prevBtn = carousel.querySelector<HTMLButtonElement>(".carousel-prev");
+    const nextBtn = carousel.querySelector<HTMLButtonElement>(".carousel-next");
+    const dots = carousel.querySelectorAll<HTMLButtonElement>(".carousel-dot");
+
+    if (!track || slides.length === 0) return;
+
+    let current = 0;
+    const total = slides.length;
+
+    function goTo(index: number) {
+      current = ((index % total) + total) % total;
+      track!.style.transform = `translateX(-${current * 100}%)`;
+      dots.forEach((dot, i) => dot.classList.toggle("is-active", i === current));
+    }
+
+    prevBtn?.addEventListener("click", () => goTo(current - 1));
+    nextBtn?.addEventListener("click", () => goTo(current + 1));
+    dots.forEach((dot) => {
+      dot.addEventListener("click", () => goTo(Number(dot.dataset.index)));
+    });
+
+    carousel.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") goTo(current - 1);
+      if (e.key === "ArrowRight") goTo(current + 1);
+    });
+
+    let startX = 0;
+    let isDragging = false;
+
+    track.addEventListener("touchstart", (e) => {
+      startX = e.touches[0].clientX;
+      isDragging = true;
+    }, { passive: true });
+
+    track.addEventListener("touchend", (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      const diff = startX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 50) goTo(diff > 0 ? current + 1 : current - 1);
+    }, { passive: true });
+  });
+</script>

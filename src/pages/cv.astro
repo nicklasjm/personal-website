@@ -1,0 +1,471 @@
+---
+import Base from "@/layouts/Base.astro";
+import { getCVData, urlFor } from "@/lib/sanity";
+
+const cv = await getCVData();
+
+function formatDate(dateStr?: string) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-DK", { month: "short", year: "numeric" });
+}
+---
+
+<Base title="CV — Nicklas Jakobsen" description="Experience, education, skills, and more.">
+  <section class="cv container">
+    <header class="cv-header animate-in">
+      <div class="cv-header-top">
+        <h1 class="cv-title">CV</h1>
+        <button class="cv-download-btn" type="button" id="download-cv">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 2v9M4 8l4 4 4-4" /><line x1="2" y1="14" x2="14" y2="14" />
+          </svg>
+          Download PDF
+        </button>
+      </div>
+    </header>
+
+    <div id="cv-content" class="cv-content">
+      {
+        cv && (
+          <>
+            {/* Profile */}
+            <section class="cv-section animate-in">
+              <div class="cv-profile">
+                {cv.photo && (
+                  <img
+                    src={urlFor(cv.photo).width(120).height(120).auto("format").url()}
+                    alt={cv.name}
+                    class="cv-photo"
+                    width="60"
+                    height="60"
+                  />
+                )}
+                <div>
+                  <h2 class="cv-name">{cv.name}</h2>
+                  {cv.jobTitle && <p class="cv-job-title">{cv.jobTitle}</p>}
+                </div>
+              </div>
+
+              <div class="cv-details">
+                {cv.email && (
+                  <span class="cv-detail">
+                    <span class="cv-detail-label">Email</span>
+                    <a href={`mailto:${cv.email}`}>{cv.email}</a>
+                  </span>
+                )}
+                {cv.phone && (
+                  <span class="cv-detail">
+                    <span class="cv-detail-label">Phone</span>
+                    <span>{cv.phone}</span>
+                  </span>
+                )}
+                {cv.location && (
+                  <span class="cv-detail">
+                    <span class="cv-detail-label">Location</span>
+                    <span>{cv.location}</span>
+                  </span>
+                )}
+                {cv.website && (
+                  <span class="cv-detail">
+                    <span class="cv-detail-label">Website</span>
+                    <a href={cv.website} target="_blank" rel="noopener noreferrer">
+                      {cv.website.replace(/^https?:\/\//, "")}
+                    </a>
+                  </span>
+                )}
+                {cv.linkedin && (
+                  <span class="cv-detail">
+                    <span class="cv-detail-label">LinkedIn</span>
+                    <a href={cv.linkedin} target="_blank" rel="noopener noreferrer">
+                      LinkedIn
+                    </a>
+                  </span>
+                )}
+              </div>
+
+              {cv.summary && <p class="cv-summary">{cv.summary}</p>}
+            </section>
+
+            {/* Experience */}
+            {cv.experience && cv.experience.length > 0 && (
+              <section class="cv-section animate-in">
+                <h3 class="cv-section-title">Experience</h3>
+                <div class="cv-list stagger-children">
+                  {cv.experience.map((job) => (
+                    <div class="cv-item">
+                      <div class="cv-item-header">
+                        <div>
+                          <h4 class="cv-item-title">{job.role}</h4>
+                          <p class="cv-item-subtitle">
+                            {job.company}
+                            {job.location && <span> · {job.location}</span>}
+                          </p>
+                        </div>
+                        <span class="cv-item-date">
+                          {formatDate(job.startDate)} — {job.current ? "Present" : formatDate(job.endDate)}
+                        </span>
+                      </div>
+                      {job.highlights && job.highlights.length > 0 && (
+                        <ul class="cv-highlights">
+                          {job.highlights.map((h) => (
+                            <li>{h}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Education */}
+            {cv.education && cv.education.length > 0 && (
+              <section class="cv-section animate-in">
+                <h3 class="cv-section-title">Education</h3>
+                <div class="cv-list stagger-children">
+                  {cv.education.map((edu) => (
+                    <div class="cv-item">
+                      <div class="cv-item-header">
+                        <div>
+                          <h4 class="cv-item-title">
+                            {edu.degree}
+                            {edu.field && <span> — {edu.field}</span>}
+                          </h4>
+                          <p class="cv-item-subtitle">{edu.institution}</p>
+                        </div>
+                        {(edu.startDate || edu.endDate) && (
+                          <span class="cv-item-date">
+                            {formatDate(edu.startDate)}
+                            {edu.endDate && ` — ${formatDate(edu.endDate)}`}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Skills */}
+            {cv.skills && cv.skills.length > 0 && (
+              <section class="cv-section animate-in">
+                <h3 class="cv-section-title">Skills</h3>
+                <div class="cv-skills stagger-children">
+                  {cv.skills.map((group) => (
+                    <div class="cv-skill-group">
+                      <h4 class="cv-skill-category">{group.category}</h4>
+                      {group.items && (
+                        <div class="cv-skill-items">
+                          {group.items.map((item) => (
+                            <span class="cv-tag">{item}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Tools */}
+            {cv.tools && cv.tools.length > 0 && (
+              <section class="cv-section animate-in">
+                <h3 class="cv-section-title">Tools</h3>
+                <div class="cv-skill-items stagger-children">
+                  {cv.tools.map((tool) => (
+                    <span class="cv-tag">{tool}</span>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Languages */}
+            {cv.languages && cv.languages.length > 0 && (
+              <section class="cv-section animate-in">
+                <h3 class="cv-section-title">Languages</h3>
+                <div class="cv-languages stagger-children">
+                  {cv.languages.map((lang) => (
+                    <div class="cv-language">
+                      <span class="cv-language-name">{lang.language}</span>
+                      {lang.proficiency && (
+                        <span class="cv-language-level">{lang.proficiency}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )
+      }
+
+      {!cv && <p class="cv-empty text-muted">CV content coming soon.</p>}
+    </div>
+  </section>
+</Base>
+
+<style>
+  .cv {
+    padding-top: var(--space-3xl);
+    padding-bottom: calc(var(--nav-height) + var(--nav-bottom-offset) + var(--space-3xl));
+    max-width: 720px;
+  }
+
+  .cv-header {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .cv-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+  }
+
+  .cv-title {
+    font-size: var(--text-xl);
+    font-weight: 600;
+  }
+
+  .cv-download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 8px 16px;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition:
+      background-color var(--duration-fast) var(--ease-out),
+      color var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out);
+  }
+
+  .cv-download-btn:hover {
+    color: var(--color-text-primary);
+    border-color: var(--color-text-muted);
+  }
+
+  .cv-section {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .cv-profile {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+  }
+
+  .cv-photo {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+  }
+
+  .cv-name {
+    font-size: var(--text-lg);
+    font-weight: 600;
+  }
+
+  .cv-job-title {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+  }
+
+  .cv-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md) var(--space-xl);
+    margin-bottom: var(--space-lg);
+  }
+
+  .cv-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .cv-detail-label {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .cv-detail a {
+    font-size: var(--text-sm);
+    color: var(--color-accent);
+  }
+
+  .cv-detail span:not(.cv-detail-label) {
+    font-size: var(--text-sm);
+  }
+
+  .cv-summary {
+    font-size: var(--text-base);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+  }
+
+  .cv-section-title {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-lg);
+  }
+
+  .cv-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+  }
+
+  .cv-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  .cv-item-title {
+    font-size: var(--text-base);
+    font-weight: 500;
+  }
+
+  .cv-item-subtitle {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+  }
+
+  .cv-item-date {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .cv-highlights {
+    margin-top: var(--space-sm);
+    padding-left: var(--space-lg);
+    list-style: disc;
+  }
+
+  .cv-highlights li {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-xs);
+    line-height: var(--leading-normal);
+  }
+
+  .cv-skills {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+
+  .cv-skill-category {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    margin-bottom: var(--space-sm);
+  }
+
+  .cv-skill-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+  }
+
+  .cv-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+  }
+
+  .cv-languages {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+  }
+
+  .cv-language {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .cv-language-name {
+    font-size: var(--text-sm);
+    font-weight: 500;
+  }
+
+  .cv-language-level {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    text-transform: capitalize;
+  }
+
+  .cv-empty {
+    text-align: center;
+    padding: var(--space-3xl) 0;
+  }
+
+  @media (max-width: 768px) {
+    .cv-item-header {
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+  }
+</style>
+
+<script>
+  const downloadBtn = document.getElementById("download-cv");
+
+  downloadBtn?.addEventListener("click", async () => {
+    downloadBtn.textContent = "Generating...";
+    downloadBtn.setAttribute("disabled", "true");
+
+    try {
+      // Dynamically import html2pdf.js
+      const html2pdf = (await import("html2pdf.js")).default;
+      const element = document.getElementById("cv-content");
+
+      if (!element) return;
+
+      const opt = {
+        margin: [12, 16, 12, 16],
+        filename: "Nicklas-Jakobsen-CV.pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#fafbfc",
+        },
+        jsPDF: {
+          unit: "mm",
+          format: "a4",
+          orientation: "portrait" as const,
+        },
+      };
+
+      await html2pdf().set(opt).from(element).save();
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+    } finally {
+      downloadBtn.textContent = "Download PDF";
+      downloadBtn.removeAttribute("disabled");
+    }
+  });
+</script>

@@ -1,0 +1,134 @@
+---
+import { getContact } from "@/lib/sanity";
+
+const contact = await getContact();
+---
+
+<div id="contact-tooltip" class="contact-tooltip tooltip-enter" role="dialog" aria-label="Contact information">
+  <div class="contact-tooltip-inner">
+    {
+      contact?.email && (
+        <a href={`mailto:${contact.email}`} class="contact-row">
+          <span class="contact-label">Email</span>
+          <span class="contact-value">{contact.email}</span>
+        </a>
+      )
+    }
+    {
+      contact?.socialLinks?.map((link) => (
+        <a
+          href={link.url}
+          class="contact-row"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span class="contact-label">{link.platform}</span>
+          <span class="contact-value">{link.handle || link.platform}</span>
+        </a>
+      ))
+    }
+    {
+      contact?.availability && (
+        <div class="contact-availability">
+          <span
+            class:list={[
+              "availability-dot",
+              {
+                "is-available": contact.availability === "available",
+                "is-open": contact.availability === "open",
+                "is-unavailable": contact.availability === "unavailable",
+              },
+            ]}
+          />
+          <span class="contact-label">
+            {contact.availability === "available"
+              ? "Available for work"
+              : contact.availability === "open"
+                ? "Open to opportunities"
+                : "Currently unavailable"}
+          </span>
+        </div>
+      )
+    }
+  </div>
+</div>
+
+<style>
+  .contact-tooltip {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform-origin: bottom center;
+    width: max-content;
+    min-width: 240px;
+    max-width: 320px;
+    z-index: 101;
+  }
+
+  .contact-tooltip-inner {
+    background: hsla(210, 25%, 97%, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-sm);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .contact-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-lg);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+
+  .contact-row:hover {
+    background: hsla(210, 20%, 92%, 0.6);
+  }
+
+  .contact-label {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .contact-value {
+    font-size: var(--text-sm);
+    color: var(--color-text-primary);
+    font-weight: 500;
+  }
+
+  .contact-availability {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-top: 1px solid var(--color-border);
+    margin-top: var(--space-xs);
+    padding-top: var(--space-md);
+  }
+
+  .availability-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full);
+    flex-shrink: 0;
+  }
+
+  .availability-dot.is-available {
+    background: hsl(142, 50%, 48%);
+    box-shadow: 0 0 6px hsla(142, 50%, 48%, 0.4);
+  }
+
+  .availability-dot.is-open {
+    background: hsl(45, 80%, 55%);
+    box-shadow: 0 0 6px hsla(45, 80%, 55%, 0.4);
+  }
+
+  .availability-dot.is-unavailable {
+    background: var(--color-text-muted);
+  }
+</style>

@@ -1,0 +1,48 @@
+---
+import Base from "@/layouts/Base.astro";
+import { getSettings } from "@/lib/sanity";
+
+const settings = await getSettings();
+const heroText =
+  settings?.heroText ||
+  "Junior Digital Designer at Kontrapunkt in Copenhagen.\nFocusing on system design, optimization, and aesthetic design.";
+---
+
+<Base bodyClass="page-home">
+  <section class="hero">
+    <div class="hero-content animate-in">
+      <p class="hero-name">Nicklas Jakobsen</p>
+      <p class="hero-text">{heroText}</p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100dvh;
+    padding: var(--grid-margin);
+    padding-bottom: calc(var(--nav-height) + var(--nav-bottom-offset) + var(--space-2xl));
+  }
+
+  .hero-content {
+    max-width: 480px;
+    text-align: center;
+  }
+
+  .hero-name {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    letter-spacing: 0.02em;
+    margin-bottom: var(--space-md);
+  }
+
+  .hero-text {
+    font-size: var(--text-lg);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+    white-space: pre-line;
+  }
+</style>

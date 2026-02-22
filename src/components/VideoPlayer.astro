@@ -1,0 +1,185 @@
+---
+interface Props {
+  src: string;
+  poster?: string;
+  caption?: string;
+}
+
+const { src, poster, caption } = Astro.props;
+---
+
+<figure class="video-player">
+  <div class="video-wrapper">
+    <video
+      src={src}
+      poster={poster}
+      playsinline
+      preload="metadata"
+      class="video-element"
+    >
+      <track kind="captions" />
+    </video>
+    <div class="video-controls">
+      <button class="video-btn video-play-btn" type="button" aria-label="Play video">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path class="play-icon" d="M6 4l10 6-10 6V4z" fill="currentColor" />
+          <g class="pause-icon" style="display:none">
+            <rect x="5" y="4" width="3.5" height="12" fill="currentColor" />
+            <rect x="11.5" y="4" width="3.5" height="12" fill="currentColor" />
+          </g>
+        </svg>
+      </button>
+      <div class="video-progress">
+        <div class="video-progress-bar"></div>
+      </div>
+      <button class="video-btn video-mute-btn" type="button" aria-label="Toggle mute">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M2 6.5h3l4-3.5v12l-4-3.5H2v-5z" fill="currentColor" />
+          <path class="volume-waves" d="M12 6.5a3.5 3.5 0 010 5M13.5 4a6.5 6.5 0 010 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" />
+          <line class="mute-line" x1="2" y1="16" x2="16" y2="2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="display:none" />
+        </svg>
+      </button>
+    </div>
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .video-player {
+    margin-block: var(--space-lg);
+  }
+
+  .video-wrapper {
+    position: relative;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--color-bg-elevated);
+  }
+
+  .video-element {
+    width: 100%;
+    display: block;
+    cursor: pointer;
+  }
+
+  .video-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: linear-gradient(transparent, hsla(0, 0%, 0%, 0.5));
+    opacity: 0;
+    transition: opacity var(--duration-normal) var(--ease-out);
+  }
+
+  .video-wrapper:hover .video-controls {
+    opacity: 1;
+  }
+
+  .video-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    color: white;
+    border-radius: var(--radius-full);
+    flex-shrink: 0;
+  }
+
+  .video-btn:hover {
+    background: hsla(0, 0%, 100%, 0.15);
+  }
+
+  .video-progress {
+    flex: 1;
+    height: 4px;
+    background: hsla(0, 0%, 100%, 0.25);
+    border-radius: 2px;
+    cursor: pointer;
+    overflow: hidden;
+  }
+
+  .video-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: white;
+    border-radius: 2px;
+    transition: width 100ms linear;
+  }
+
+  figcaption {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin-top: var(--space-xs);
+    text-align: center;
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>(".video-player").forEach((player) => {
+    const video = player.querySelector<HTMLVideoElement>(".video-element");
+    const playBtn = player.querySelector<HTMLButtonElement>(".video-play-btn");
+    const muteBtn = player.querySelector<HTMLButtonElement>(".video-mute-btn");
+    const progressBar = player.querySelector<HTMLElement>(".video-progress-bar");
+    const progress = player.querySelector<HTMLElement>(".video-progress");
+    const playIcon = player.querySelector<SVGElement>(".play-icon");
+    const pauseIcon = player.querySelector<SVGElement>(".pause-icon");
+    const volumeWaves = player.querySelector<SVGElement>(".volume-waves");
+    const muteLine = player.querySelector<SVGElement>(".mute-line");
+
+    if (!video || !playBtn || !muteBtn || !progressBar || !progress) return;
+
+    function updatePlayIcon() {
+      if (video!.paused) {
+        playIcon!.style.display = "";
+        pauseIcon!.style.display = "none";
+      } else {
+        playIcon!.style.display = "none";
+        pauseIcon!.style.display = "";
+      }
+    }
+
+    playBtn.addEventListener("click", () => {
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+    });
+
+    video.addEventListener("click", () => {
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+    });
+
+    video.addEventListener("play", updatePlayIcon);
+    video.addEventListener("pause", updatePlayIcon);
+
+    video.addEventListener("timeupdate", () => {
+      if (video.duration) {
+        const pct = (video.currentTime / video.duration) * 100;
+        progressBar.style.width = `${pct}%`;
+      }
+    });
+
+    progress.addEventListener("click", (e) => {
+      const rect = progress.getBoundingClientRect();
+      const pct = (e.clientX - rect.left) / rect.width;
+      video.currentTime = pct * video.duration;
+    });
+
+    muteBtn.addEventListener("click", () => {
+      video.muted = !video.muted;
+      volumeWaves!.style.display = video.muted ? "none" : "";
+      muteLine!.style.display = video.muted ? "" : "none";
+    });
+  });
+</script>

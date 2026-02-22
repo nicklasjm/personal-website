@@ -1,0 +1,131 @@
+---
+import ContactTooltip from "./ContactTooltip.astro";
+
+const currentPath = Astro.url.pathname;
+
+const navLinks = [
+  { href: "/feed", label: "Feed" },
+  { href: "/cv", label: "CV" },
+];
+---
+
+<nav class="nav nav-bar-enter" aria-label="Main navigation">
+  <div class="nav-pill">
+    {
+      navLinks.map((link) => (
+        <a
+          href={link.href}
+          class:list={["nav-link", { "is-active": currentPath.startsWith(link.href) }]}
+        >
+          {link.label}
+        </a>
+      ))
+    }
+    <button
+      class="nav-link nav-contact-btn"
+      type="button"
+      aria-expanded="false"
+      aria-controls="contact-tooltip"
+    >
+      Contact
+    </button>
+  </div>
+  <ContactTooltip />
+</nav>
+
+<style>
+  .nav {
+    position: fixed;
+    bottom: var(--nav-bottom-offset);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+  }
+
+  .nav-pill {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 6px;
+    background: hsla(210, 25%, 96%, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-md);
+  }
+
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    border-radius: var(--radius-full);
+    transition:
+      background-color var(--duration-fast) var(--ease-out),
+      color var(--duration-fast) var(--ease-out);
+    white-space: nowrap;
+    text-decoration: none;
+  }
+
+  .nav-link:hover {
+    color: var(--color-text-primary);
+    background: hsla(210, 20%, 92%, 0.8);
+  }
+
+  .nav-link.is-active {
+    color: var(--color-text-primary);
+    background: var(--color-bg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .nav-contact-btn {
+    cursor: pointer;
+  }
+</style>
+
+<script>
+  const contactBtn = document.querySelector(".nav-contact-btn");
+  const tooltip = document.getElementById("contact-tooltip");
+
+  if (contactBtn && tooltip) {
+    let isOpen = false;
+
+    function toggleTooltip() {
+      isOpen = !isOpen;
+      tooltip!.classList.toggle("is-active", isOpen);
+      contactBtn!.setAttribute("aria-expanded", String(isOpen));
+
+      // Mark as instant for subsequent opens (skip delay)
+      if (isOpen) {
+        tooltip!.setAttribute("data-instant", "");
+      }
+    }
+
+    function closeTooltip() {
+      if (!isOpen) return;
+      isOpen = false;
+      tooltip!.classList.remove("is-active");
+      contactBtn!.setAttribute("aria-expanded", "false");
+    }
+
+    contactBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleTooltip();
+    });
+
+    // Close on outside click
+    document.addEventListener("click", (e) => {
+      if (!tooltip!.contains(e.target as Node)) {
+        closeTooltip();
+      }
+    });
+
+    // Close on Escape
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeTooltip();
+    });
+  }
+</script>

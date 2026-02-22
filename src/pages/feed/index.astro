@@ -1,0 +1,178 @@
+---
+import Base from "@/layouts/Base.astro";
+import PostCard from "@/components/PostCard.astro";
+import { getAllPosts } from "@/lib/sanity";
+
+const posts = await getAllPosts();
+
+// Group posts by year
+const postsByYear = posts.reduce<Record<string, typeof posts>>((acc, post) => {
+  const year = new Date(post.publishedAt).getFullYear().toString();
+  if (!acc[year]) acc[year] = [];
+  acc[year].push(post);
+  return acc;
+}, {});
+
+const years = Object.keys(postsByYear).sort((a, b) => Number(b) - Number(a));
+
+const categories = ["all", "work", "playground", "thoughts", "links", "photography"] as const;
+---
+
+<Base title="Feed — Nicklas Jakobsen" description="Work, experiments, thoughts, and more.">
+  <section class="feed container">
+    <header class="feed-header animate-in">
+      <h1 class="feed-title">Feed</h1>
+    </header>
+
+    <div class="feed-filters animate-in" role="group" aria-label="Filter by category">
+      {
+        categories.map((cat) => (
+          <button
+            class:list={["filter-btn", { "is-active": cat === "all" }]}
+            data-filter={cat}
+            type="button"
+          >
+            {cat === "all" ? "All" : cat.charAt(0).toUpperCase() + cat.slice(1)}
+          </button>
+        ))
+      }
+    </div>
+
+    <div class="feed-content">
+      {
+        years.map((year) => (
+          <section class="feed-year-group animate-in" data-year={year}>
+            <h2 class="feed-year">{year}</h2>
+            <div class="feed-grid stagger-children">
+              {postsByYear[year].map((post) => (
+                <div class="feed-item" data-category={post.category}>
+                  <PostCard post={post} />
+                </div>
+              ))}
+            </div>
+          </section>
+        ))
+      }
+    </div>
+
+    {posts.length === 0 && <p class="feed-empty text-muted">No posts yet.</p>}
+  </section>
+</Base>
+
+<style>
+  .feed {
+    padding-top: var(--space-3xl);
+    padding-bottom: calc(var(--nav-height) + var(--nav-bottom-offset) + var(--space-3xl));
+  }
+
+  .feed-header {
+    margin-bottom: var(--space-xl);
+  }
+
+  .feed-title {
+    font-size: var(--text-xl);
+    font-weight: 600;
+  }
+
+  .feed-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-2xl);
+  }
+
+  .filter-btn {
+    padding: 6px 14px;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text-muted);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition:
+      background-color var(--duration-fast) var(--ease-out),
+      color var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out);
+  }
+
+  .filter-btn:hover {
+    color: var(--color-text-secondary);
+    background: var(--color-bg-elevated);
+  }
+
+  .filter-btn.is-active {
+    color: var(--color-text-primary);
+    background: var(--color-bg-elevated);
+    border-color: var(--color-border);
+  }
+
+  .feed-year-group {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .feed-year {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-lg);
+  }
+
+  .feed-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-xl);
+  }
+
+  .feed-item {
+    transition: opacity var(--duration-normal) var(--ease-out);
+  }
+
+  .feed-item.is-hidden {
+    display: none;
+  }
+
+  .feed-empty {
+    text-align: center;
+    padding: var(--space-3xl) 0;
+  }
+
+  @media (max-width: 768px) {
+    .feed-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  const filterBtns = document.querySelectorAll<HTMLButtonElement>(".filter-btn");
+  const feedItems = document.querySelectorAll<HTMLElement>(".feed-item");
+  const yearGroups = document.querySelectorAll<HTMLElement>(".feed-year-group");
+
+  filterBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const filter = btn.dataset.filter;
+
+      // Update active button
+      filterBtns.forEach((b) => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+
+      // Filter posts
+      feedItems.forEach((item) => {
+        if (filter === "all" || item.dataset.category === filter) {
+          item.classList.remove("is-hidden");
+        } else {
+          item.classList.add("is-hidden");
+        }
+      });
+
+      // Hide year groups with no visible posts
+      yearGroups.forEach((group) => {
+        const visibleItems = group.querySelectorAll(
+          ".feed-item:not(.is-hidden)",
+        );
+        group.style.display = visibleItems.length === 0 ? "none" : "";
+      });
+    });
+  });
+</script>
