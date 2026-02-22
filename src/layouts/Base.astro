@@ -1,5 +1,6 @@
 ---
 import Navigation from "@/components/Navigation.astro";
+import ThemeToggle from "@/components/ThemeToggle.astro";
 import "@/styles/global.css";
 import "@/styles/animations.css";
 
@@ -57,12 +58,25 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
       title="Nicklas Jakobsen — Feed"
       href="/rss.xml"
     />
+
+    <!-- Theme initialisation: runs before first paint to avoid flash -->
+    <script is:inline>
+      (function () {
+        var saved = localStorage.getItem("theme");
+        var prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+        document.documentElement.dataset.theme =
+          saved || (prefersDark ? "dark" : "light");
+      })();
+    </script>
   </head>
   <body class={bodyClass}>
     <main>
       <slot />
     </main>
     <Navigation />
+    <ThemeToggle />
 
     <script>
       // Intersection Observer for scroll-triggered animations
