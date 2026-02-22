@@ -8,7 +8,7 @@ import { contact } from "./schemas/contact";
 export default defineConfig({
   name: "nicklasjakobsen",
   title: "Nicklas Jakobsen Portfolio",
-  projectId: import.meta.env.PUBLIC_SANITY_PROJECT_ID || "placeholder",
+  projectId: import.meta.env.PUBLIC_SANITY_PROJECT_ID || "ty04ghjg",
   dataset: import.meta.env.PUBLIC_SANITY_DATASET || "production",
   plugins: [
     structureTool({
