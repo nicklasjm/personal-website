@@ -12,12 +12,12 @@
   --color-accent: hsl(210, 30%, 50%);
   --color-border: hsl(210, 15%, 90%);
 
-  /* Gradient colors (animated background) */
-  --gradient-1: hsl(210, 70%, 91%);
-  --gradient-2: hsl(225, 65%, 93%);
-  --gradient-3: hsl(195, 75%, 89%);
-  --gradient-4: hsl(215, 80%, 88%);
-  --gradient-5: hsl(205, 60%, 92%);
+  /* Gradient colors (animated mesh background) */
+  --gradient-base: hsl(220, 40%, 97%);
+  --gradient-1: hsla(214, 88%, 78%, 0.55);
+  --gradient-2: hsla(250, 72%, 86%, 0.48);
+  --gradient-3: hsla(186, 82%, 82%, 0.48);
+  --gradient-4: hsla(272, 62%, 87%, 0.38);
 
   /* Glassmorphism colors */
   --nav-glass-bg: hsla(210, 25%, 96%, 0.85);
@@ -99,11 +99,11 @@
   --shadow-lg: 0 8px 24px hsla(220, 30%, 5%, 0.55);
 
   /* Gradient colors for dark mode */
-  --gradient-1: hsl(220, 38%, 9%);
-  --gradient-2: hsl(232, 32%, 12%);
-  --gradient-3: hsl(213, 45%, 8%);
-  --gradient-4: hsl(226, 36%, 11%);
-  --gradient-5: hsl(210, 28%, 10%);
+  --gradient-base: hsl(222, 30%, 7%);
+  --gradient-1: hsla(212, 80%, 22%, 0.7);
+  --gradient-2: hsla(248, 58%, 28%, 0.55);
+  --gradient-3: hsla(188, 72%, 18%, 0.6);
+  --gradient-4: hsla(270, 50%, 26%, 0.45);
 
   /* Glassmorphism colors for dark mode */
   --nav-glass-bg: hsla(220, 22%, 16%, 0.88);
@@ -140,29 +140,31 @@ body {
   font-size: var(--text-base);
   line-height: var(--leading-relaxed);
   color: var(--color-text-primary);
-  background: linear-gradient(
-    135deg,
-    var(--gradient-1) 0%,
-    var(--gradient-2) 25%,
-    var(--gradient-3) 50%,
-    var(--gradient-4) 75%,
-    var(--gradient-5) 100%
-  );
-  background-size: 300% 300%;
-  animation: gradientFlow 18s ease infinite;
+  background-color: var(--gradient-base);
+  background-image:
+    radial-gradient(ellipse 80% 65% at 15% 25%, var(--gradient-1) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 80% at 85% 75%, var(--gradient-2) 0%, transparent 55%),
+    radial-gradient(ellipse 90% 60% at 65% 10%, var(--gradient-3) 0%, transparent 60%),
+    radial-gradient(ellipse 65% 70% at 35% 85%, var(--gradient-4) 0%, transparent 55%);
+  background-size: 280% 280%, 280% 280%, 260% 260%, 260% 260%;
+  background-position: 0% 0%, 100% 100%, 100% 0%, 0% 100%;
+  animation: meshGradient 32s ease-in-out infinite;
   min-height: 100dvh;
   overflow-x: hidden;
 }
 
-@keyframes gradientFlow {
-  0% {
-    background-position: 0% 50%;
+@keyframes meshGradient {
+  0%, 100% {
+    background-position: 0% 0%, 100% 100%, 100% 0%, 0% 100%;
+  }
+  25% {
+    background-position: 40% 60%, 60% 30%, 20% 80%, 80% 20%;
   }
   50% {
-    background-position: 100% 50%;
+    background-position: 80% 20%, 20% 80%, 60% 100%, 40% 0%;
   }
-  100% {
-    background-position: 0% 50%;
+  75% {
+    background-position: 30% 90%, 70% 10%, 90% 40%, 10% 60%;
   }
 }
 
