@@ -1,9 +1,10 @@
 import { defineConfig } from "sanity";
 import { structureTool } from "sanity/structure";
-import { post } from "./schemas/post";
-import { cv } from "./schemas/cv";
-import { siteSettings } from "./schemas/settings";
-import { contact } from "./schemas/contact";
+import { visionTool } from "@sanity/vision";
+import { post } from "./sanity/schemas/post";
+import { cv } from "./sanity/schemas/cv";
+import { siteSettings } from "./sanity/schemas/settings";
+import { contact } from "./sanity/schemas/contact";
 
 export default defineConfig({
   name: "nicklasjakobsen",
@@ -35,6 +36,7 @@ export default defineConfig({
             S.documentTypeListItem("post").title("Posts"),
           ]),
     }),
+    visionTool(),
   ],
   schema: {
     types: [post, cv, siteSettings, contact],
