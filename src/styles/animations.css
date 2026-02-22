@@ -43,6 +43,10 @@
 
 /* Tooltip / Popover — scale from origin */
 .tooltip-enter {
+  pointer-events: none;
+}
+
+.tooltip-enter .contact-tooltip-inner {
   opacity: 0;
   transform: scale(0.93) translateY(4px);
   filter: blur(2px);
@@ -50,18 +54,20 @@
     opacity var(--duration-normal) var(--ease-out),
     transform var(--duration-normal) var(--ease-out),
     filter var(--duration-normal) var(--ease-out);
-  pointer-events: none;
 }
 
 .tooltip-enter.is-active {
-  opacity: 1;
-  transform: scale(1) translateY(0);
-  filter: blur(0);
   pointer-events: auto;
 }
 
+.tooltip-enter.is-active .contact-tooltip-inner {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  filter: blur(0);
+}
+
 /* Skip delay on subsequent tooltips */
-[data-instant] .tooltip-enter {
+[data-instant] .contact-tooltip-inner {
   transition-duration: 100ms;
 }
 
