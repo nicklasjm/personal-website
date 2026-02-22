@@ -122,8 +122,17 @@ export interface SocialLink {
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
 
+async function safeFetch<T>(query: string, params?: Record<string, unknown>): Promise<T | null> {
+  try {
+    return await sanityClient.fetch<T>(query, params);
+  } catch (err) {
+    console.warn("[sanity] Fetch failed, returning null:", (err as Error).message);
+    return null;
+  }
+}
+
 export async function getSettings(): Promise<SiteSettings | null> {
-  return sanityClient.fetch(
+  return safeFetch(
     `*[_type == "siteSettings"][0]{
       title,
       description,
@@ -135,7 +144,7 @@ export async function getSettings(): Promise<SiteSettings | null> {
 }
 
 export async function getContact(): Promise<Contact | null> {
-  return sanityClient.fetch(
+  return safeFetch(
     `*[_type == "contact"][0]{
       email,
       socialLinks[]{
@@ -149,8 +158,9 @@ export async function getContact(): Promise<Contact | null> {
 }
 
 export async function getAllPosts(): Promise<Post[]> {
-  return sanityClient.fetch(
-    `*[_type == "post"] | order(publishedAt desc){
+  return (
+    (await safeFetch<Post[]>(
+      `*[_type == "post"] | order(publishedAt desc){
       _id,
       title,
       slug,
@@ -171,11 +181,12 @@ export async function getAllPosts(): Promise<Post[]> {
       },
       externalLink
     }`,
+    )) ?? []
   );
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
-  return sanityClient.fetch(
+  return safeFetch(
     `*[_type == "post" && slug.current == $slug][0]{
       _id,
       title,
@@ -221,7 +232,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
 }
 
 export async function getCVData(): Promise<CVData | null> {
-  return sanityClient.fetch(
+  return safeFetch(
     `*[_type == "cv"][0]{
       name,
       jobTitle,
