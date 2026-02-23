@@ -33,6 +33,34 @@ const date = new Date(post.publishedAt).toLocaleDateString("en-DK", {
   month: "short",
   year: "numeric",
 });
+
+// Collect all images for the expanded carousel
+const expandImages: string[] = [];
+if (post.featuredImage) {
+  expandImages.push(
+    urlFor(post.featuredImage).width(1200).height(750).auto("format").url()
+  );
+}
+if (post.bodyImages) {
+  for (const img of post.bodyImages) {
+    expandImages.push(
+      urlFor(img).width(1200).height(750).auto("format").url()
+    );
+  }
+}
+if (post.galleries) {
+  for (const gallery of post.galleries) {
+    if (gallery.images) {
+      for (const img of gallery.images) {
+        expandImages.push(
+          urlFor(img).width(1200).height(750).auto("format").url()
+        );
+      }
+    }
+  }
+}
+
+const hasExpandContent = expandImages.length > 0 || post.excerpt;
 ---
 
 <article class="post-card hover-lift animate-in">
@@ -78,10 +106,32 @@ const date = new Date(post.publishedAt).toLocaleDateString("en-DK", {
       </div>
     </div>
   </a>
+  {hasExpandContent && (
+    <button
+      class="post-expand-toggle"
+      type="button"
+      aria-label="Expand post"
+      data-expand-images={JSON.stringify(expandImages)}
+      data-expand-excerpt={post.excerpt || ""}
+      data-expand-title={post.title}
+      data-expand-href={href}
+      data-expand-date={date}
+      data-expand-category={post.category}
+      data-expand-external={isExternal ? "true" : "false"}
+    >
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="10 2 14 2 14 6" />
+        <line x1="9" y1="7" x2="14" y2="2" />
+        <polyline points="6 14 2 14 2 10" />
+        <line x1="7" y1="9" x2="2" y2="14" />
+      </svg>
+    </button>
+  )}
 </article>
 
 <style>
   .post-card {
+    position: relative;
     border-radius: var(--radius-lg);
     overflow: hidden;
   }
@@ -148,6 +198,285 @@ const date = new Date(post.publishedAt).toLocaleDateString("en-DK", {
   .post-card-external {
     font-size: var(--text-sm);
   }
+
+  /* Expand toggle */
+  .post-expand-toggle {
+    position: absolute;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: hsla(210, 25%, 97%, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-secondary);
+    opacity: 0;
+    transform: scale(0.9);
+    transition:
+      opacity var(--duration-normal) var(--ease-out),
+      transform var(--duration-normal) var(--ease-out),
+      background-color var(--duration-fast) var(--ease-out),
+      color var(--duration-fast) var(--ease-out),
+      box-shadow var(--duration-fast) var(--ease-out);
+    z-index: 3;
+    cursor: pointer;
+  }
+
+  .post-card:hover .post-expand-toggle {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .post-expand-toggle:hover {
+    background: hsla(0, 0%, 100%, 0.95);
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-md);
+    transform: scale(1.08);
+  }
+
+  .post-expand-toggle:active {
+    transform: scale(0.95);
+  }
+
+  /* Always show toggle on touch devices */
+  @media (hover: none) {
+    .post-expand-toggle {
+      opacity: 0.8;
+      transform: scale(1);
+    }
+  }
+</style>
+
+<style is:global>
+  /* ==========================================================================
+     Expanded post overlay
+     ========================================================================== */
+
+  .post-expanded-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg);
+  }
+
+  .post-expanded-backdrop {
+    position: absolute;
+    inset: 0;
+    background: hsla(210, 20%, 10%, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    opacity: 0;
+    transition: opacity 350ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .post-expanded-overlay.is-active .post-expanded-backdrop {
+    opacity: 1;
+  }
+
+  .post-expanded-card {
+    position: relative;
+    max-width: 640px;
+    width: 100%;
+    max-height: 85vh;
+    overflow: hidden;
+    overflow-y: auto;
+    background: var(--color-bg);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 24px 48px hsla(210, 15%, 25%, 0.15);
+    opacity: 0;
+    transform: scale(0.95);
+    filter: blur(4px);
+    transition:
+      opacity 350ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 350ms cubic-bezier(0.16, 1, 0.3, 1),
+      filter 350ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .post-expanded-overlay.is-active .post-expanded-card {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+
+  /* Close button */
+  .post-expanded-close {
+    position: absolute;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: hsla(210, 25%, 97%, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-secondary);
+    z-index: 2;
+    cursor: pointer;
+    transition:
+      background-color 150ms cubic-bezier(0.16, 1, 0.3, 1),
+      color 150ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .post-expanded-close:hover {
+    background: hsla(0, 0%, 100%, 0.95);
+    color: var(--color-text-primary);
+    box-shadow: 0 4px 12px hsla(210, 15%, 25%, 0.08);
+  }
+
+  /* Carousel */
+  .post-expanded-carousel {
+    position: relative;
+    overflow: hidden;
+    background: var(--color-bg-elevated);
+  }
+
+  .post-expanded-carousel-track {
+    display: flex;
+    transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+    touch-action: pan-y;
+  }
+
+  .post-expanded-carousel-slide {
+    flex: 0 0 100%;
+    min-width: 0;
+    aspect-ratio: 16 / 10;
+  }
+
+  .post-expanded-carousel-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .post-expanded-carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: hsla(210, 25%, 97%, 0.9);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-sm);
+    z-index: 2;
+    cursor: pointer;
+    transition:
+      background-color 150ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .post-expanded-carousel-btn:hover {
+    background: var(--color-bg);
+    box-shadow: var(--shadow-md);
+  }
+
+  .post-expanded-carousel-prev {
+    left: var(--space-sm);
+  }
+
+  .post-expanded-carousel-next {
+    right: var(--space-sm);
+  }
+
+  .post-expanded-carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: var(--space-sm) 0;
+  }
+
+  .post-expanded-carousel-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-full);
+    background: var(--color-border);
+    border: none;
+    cursor: pointer;
+    transition: background-color 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .post-expanded-carousel-dot.is-active {
+    background: var(--color-text-secondary);
+  }
+
+  /* Body content */
+  .post-expanded-body {
+    padding: var(--space-lg);
+  }
+
+  .post-expanded-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    line-height: var(--leading-tight);
+    margin-bottom: var(--space-sm);
+  }
+
+  .post-expanded-title a {
+    text-decoration: none;
+    color: inherit;
+    transition: color 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .post-expanded-title a:hover {
+    color: var(--color-accent);
+  }
+
+  .post-expanded-excerpt {
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-md);
+  }
+
+  .post-expanded-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+
+  .post-expanded-category {
+    text-transform: capitalize;
+  }
+
+  .post-expanded-category::after {
+    content: "·";
+    margin-left: var(--space-sm);
+  }
+
+  /* Body scroll lock */
+  body.post-expanded-open {
+    overflow: hidden;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .post-expanded-backdrop,
+    .post-expanded-card {
+      transition-duration: 0.01ms !important;
+    }
+  }
 </style>
 
 <script>
@@ -168,4 +497,251 @@ const date = new Date(post.publishedAt).toLocaleDateString("en-DK", {
       video.currentTime = 0;
     });
   });
+
+  // ── Expand post functionality ────────────────────────────────────────────
+
+  let activeOverlay: HTMLElement | null = null;
+  let activeTrigger: HTMLElement | null = null;
+
+  function closeExpanded(animate = true) {
+    if (!activeOverlay) return;
+    const overlay = activeOverlay;
+    const trigger = activeTrigger;
+
+    if (animate) {
+      overlay.classList.remove("is-active");
+      const onEnd = () => {
+        overlay.remove();
+        document.body.classList.remove("post-expanded-open");
+      };
+      overlay
+        .querySelector(".post-expanded-card")
+        ?.addEventListener("transitionend", onEnd, { once: true });
+      // Fallback in case transitionend doesn't fire
+      setTimeout(onEnd, 450);
+    } else {
+      overlay.remove();
+      document.body.classList.remove("post-expanded-open");
+    }
+
+    activeOverlay = null;
+    activeTrigger = null;
+
+    // Return focus to the toggle that opened it
+    if (trigger) trigger.focus();
+  }
+
+  function openExpanded(btn: HTMLElement) {
+    // Close existing overlay immediately if one is open
+    if (activeOverlay) closeExpanded(false);
+
+    const images: string[] = JSON.parse(btn.dataset.expandImages || "[]");
+    const excerpt = btn.dataset.expandExcerpt || "";
+    const title = btn.dataset.expandTitle || "";
+    const href = btn.dataset.expandHref || "#";
+    const date = btn.dataset.expandDate || "";
+    const category = btn.dataset.expandCategory || "";
+    const isExternal = btn.dataset.expandExternal === "true";
+
+    // Build overlay element
+    const overlay = document.createElement("div");
+    overlay.className = "post-expanded-overlay";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.setAttribute("aria-label", title);
+
+    // Build carousel HTML
+    let carouselHTML = "";
+    if (images.length > 0) {
+      const slides = images
+        .map(
+          (url, i) =>
+            `<div class="post-expanded-carousel-slide" data-index="${i}">
+              <img src="${url}" alt="" loading="${i === 0 ? "eager" : "lazy"}" decoding="async" />
+            </div>`,
+        )
+        .join("");
+
+      let navHTML = "";
+      if (images.length > 1) {
+        const dots = images
+          .map(
+            (_, i) =>
+              `<button class="post-expanded-carousel-dot${i === 0 ? " is-active" : ""}" type="button" aria-label="Go to image ${i + 1}" data-index="${i}"></button>`,
+          )
+          .join("");
+
+        navHTML = `
+          <button class="post-expanded-carousel-btn post-expanded-carousel-prev" type="button" aria-label="Previous image">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 16 7 10 13 4" /></svg>
+          </button>
+          <button class="post-expanded-carousel-btn post-expanded-carousel-next" type="button" aria-label="Next image">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 4 13 10 7 16" /></svg>
+          </button>
+          <div class="post-expanded-carousel-dots">${dots}</div>
+        `;
+      }
+
+      carouselHTML = `
+        <div class="post-expanded-carousel">
+          <div class="post-expanded-carousel-track">${slides}</div>
+          ${navHTML}
+        </div>
+      `;
+    }
+
+    // Build body HTML
+    const excerptHTML = excerpt
+      ? `<p class="post-expanded-excerpt">${excerpt}</p>`
+      : "";
+    const externalIcon = isExternal
+      ? ' <span aria-label="External link">&#8599;</span>'
+      : "";
+    const linkTarget = isExternal
+      ? ' target="_blank" rel="noopener noreferrer"'
+      : "";
+
+    overlay.innerHTML = `
+      <div class="post-expanded-backdrop"></div>
+      <div class="post-expanded-card">
+        <button class="post-expanded-close" type="button" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="4" x2="12" y2="12" />
+            <line x1="12" y1="4" x2="4" y2="12" />
+          </svg>
+        </button>
+        ${carouselHTML}
+        <div class="post-expanded-body">
+          <h3 class="post-expanded-title">
+            <a href="${href}"${linkTarget}>${title}${externalIcon}</a>
+          </h3>
+          ${excerptHTML}
+          <div class="post-expanded-meta">
+            <span class="post-expanded-category">${category}</span>
+            <span>${date}</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    document.body.classList.add("post-expanded-open");
+
+    // Trigger enter animation on next frame
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        overlay.classList.add("is-active");
+      });
+    });
+
+    activeOverlay = overlay;
+    activeTrigger = btn;
+
+    // Focus the close button
+    const closeBtn =
+      overlay.querySelector<HTMLButtonElement>(".post-expanded-close");
+    closeBtn?.focus();
+
+    // ── Close handlers ──
+
+    overlay
+      .querySelector(".post-expanded-backdrop")!
+      .addEventListener("click", () => closeExpanded());
+    closeBtn!.addEventListener("click", () => closeExpanded());
+
+    // ── Carousel logic ──
+
+    if (images.length > 1) {
+      const track = overlay.querySelector<HTMLElement>(
+        ".post-expanded-carousel-track",
+      );
+      const dots = overlay.querySelectorAll<HTMLElement>(
+        ".post-expanded-carousel-dot",
+      );
+      const prevBtn = overlay.querySelector<HTMLElement>(
+        ".post-expanded-carousel-prev",
+      );
+      const nextBtn = overlay.querySelector<HTMLElement>(
+        ".post-expanded-carousel-next",
+      );
+      let current = 0;
+      const total = images.length;
+
+      function goTo(index: number) {
+        current = ((index % total) + total) % total;
+        track!.style.transform = `translateX(-${current * 100}%)`;
+        dots.forEach((dot, i) =>
+          dot.classList.toggle("is-active", i === current),
+        );
+      }
+
+      prevBtn?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        goTo(current - 1);
+      });
+      nextBtn?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        goTo(current + 1);
+      });
+      dots.forEach((dot) => {
+        dot.addEventListener("click", (e) => {
+          e.stopPropagation();
+          goTo(Number((dot as HTMLElement).dataset.index));
+        });
+      });
+
+      // Touch/swipe support
+      let startX = 0;
+      let isDragging = false;
+      const carouselEl = overlay.querySelector<HTMLElement>(
+        ".post-expanded-carousel",
+      );
+
+      carouselEl?.addEventListener(
+        "touchstart",
+        (e) => {
+          startX = (e as TouchEvent).touches[0].clientX;
+          isDragging = true;
+        },
+        { passive: true },
+      );
+
+      carouselEl?.addEventListener(
+        "touchend",
+        (e) => {
+          if (!isDragging) return;
+          isDragging = false;
+          const diff = startX - (e as TouchEvent).changedTouches[0].clientX;
+          if (Math.abs(diff) > 50) {
+            goTo(diff > 0 ? current + 1 : current - 1);
+          }
+        },
+        { passive: true },
+      );
+
+      // Arrow key navigation within overlay
+      overlay.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowLeft") goTo(current - 1);
+        if (e.key === "ArrowRight") goTo(current + 1);
+      });
+    }
+  }
+
+  // ── Global keyboard handler ──
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeExpanded();
+  });
+
+  // ── Attach expand handlers ──
+
+  document
+    .querySelectorAll<HTMLElement>(".post-expand-toggle")
+    .forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openExpanded(btn);
+      });
+    });
 </script>
