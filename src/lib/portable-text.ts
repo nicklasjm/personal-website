@@ -1,5 +1,5 @@
 import { toHTML } from "@portabletext/to-html";
-import { urlFor, getFileUrl, optimizedUrl, imageSrcSet } from "./sanity";
+import { getFileUrl, optimizedUrl, imageSrcSet } from "./sanity";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 
 interface PortableTextBlock {

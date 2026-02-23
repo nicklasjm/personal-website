@@ -1,5 +1,5 @@
 ---
-import { urlFor, getFileUrl, optimizedUrl, imageSrcSet } from "@/lib/sanity";
+import { getFileUrl, optimizedUrl, imageSrcSet } from "@/lib/sanity";
 import type { Post } from "@/lib/sanity";
 
 interface Props {
@@ -78,15 +78,23 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
       (imageUrl || videoUrl) && (
         <div class="post-card-media">
           {videoUrl ? (
-            <div class="video-wrapper">
+            <div class="video-hover-wrapper">
+              <img
+                src={posterUrl || imageUrl || ""}
+                srcset={(post.videoPoster ? imageSrcSet(post.videoPoster, [400, 800, 1200], { fit: "crop" }) : imageSrcSetStr) || undefined}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
+                alt={post.featuredImage?.alt || post.title}
+                loading="lazy"
+                decoding="async"
+                class="post-card-image"
+              />
               <video
                 src={videoUrl}
-                poster={posterUrl || undefined}
                 muted
                 loop
                 playsinline
                 preload="none"
-                class="post-card-video"
+                class="post-card-video-overlay"
               />
             </div>
           ) : (
@@ -160,16 +168,49 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
     background: var(--color-bg-elevated);
   }
 
-  .post-card-image,
-  .post-card-video {
+  .post-card-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: transform var(--duration-slow) var(--ease-out);
   }
 
-  .post-card-link:hover .post-card-image,
-  .post-card-link:hover .post-card-video {
+  .post-card-link:hover .post-card-image {
+    transform: scale(1.02);
+  }
+
+  /* Video-on-hover: image visible by default, video fades in on hover */
+  .video-hover-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .video-hover-wrapper .post-card-image {
+    position: relative;
+    z-index: 1;
+  }
+
+  .post-card-video-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    z-index: 2;
+    transition: opacity var(--duration-slow) var(--ease-out);
+  }
+
+  .post-card-video-overlay.is-playing {
+    opacity: 1;
+  }
+
+  .post-card-link:hover .video-hover-wrapper .post-card-image {
+    transform: scale(1.02);
+  }
+
+  .post-card-link:hover .post-card-video-overlay.is-playing {
     transform: scale(1.02);
   }
 
@@ -486,19 +527,28 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
 </style>
 
 <script>
-  // Autoplay video on hover
-  document.querySelectorAll(".post-card .video-wrapper").forEach((wrapper) => {
-    const video = wrapper.querySelector("video");
+  // Autoplay video on hover — video fades in over the static thumbnail
+  document.querySelectorAll<HTMLElement>(".post-card .video-hover-wrapper").forEach((wrapper) => {
+    const video = wrapper.querySelector<HTMLVideoElement>(".post-card-video-overlay");
     if (!video) return;
 
     const card = wrapper.closest(".post-card");
     if (!card) return;
 
+    // Once enough data is buffered, show the video
+    function showVideo() {
+      video!.classList.add("is-playing");
+    }
+
     card.addEventListener("mouseenter", () => {
-      video.play().catch(() => {});
+      // Start loading + playing
+      video.play().then(showVideo).catch(() => {});
+      // If already ready, show immediately
+      if (video.readyState >= 3) showVideo();
     });
 
     card.addEventListener("mouseleave", () => {
+      video.classList.remove("is-playing");
       video.pause();
       video.currentTime = 0;
     });
