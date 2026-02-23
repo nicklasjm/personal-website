@@ -1,6 +1,7 @@
 ---
 import Navigation from "@/components/Navigation.astro";
 import ThemeToggle from "@/components/ThemeToggle.astro";
+import GridOverlay from "@/components/GridOverlay.astro";
 import "@/styles/global.css";
 import "@/styles/animations.css";
 
@@ -77,6 +78,7 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
     </main>
     <Navigation />
     <ThemeToggle />
+    <GridOverlay />
 
     <script>
       // Intersection Observer for scroll-triggered animations

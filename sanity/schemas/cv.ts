@@ -44,8 +44,36 @@ export const cv = defineType({
     defineField({
       name: "summary",
       title: "Summary",
-      type: "text",
-      rows: 4,
+      type: "array",
+      of: [
+        {
+          type: "block",
+          styles: [{ title: "Normal", value: "normal" }],
+          marks: {
+            decorators: [
+              { title: "Bold", value: "strong" },
+              { title: "Italic", value: "em" },
+            ],
+            annotations: [
+              {
+                name: "link",
+                type: "object",
+                title: "Link",
+                fields: [
+                  {
+                    name: "href",
+                    type: "url",
+                    title: "URL",
+                    validation: (rule) =>
+                      rule.uri({ allowRelative: true, scheme: ["http", "https", "mailto"] }),
+                  },
+                ],
+              },
+            ],
+          },
+          lists: [],
+        },
+      ],
     }),
     defineField({
       name: "photo",
@@ -97,6 +125,42 @@ export const cv = defineType({
               initialValue: false,
             }),
             defineField({
+              name: "description",
+              title: "Description",
+              type: "array",
+              of: [
+                {
+                  type: "block",
+                  styles: [{ title: "Normal", value: "normal" }],
+                  marks: {
+                    decorators: [
+                      { title: "Bold", value: "strong" },
+                      { title: "Italic", value: "em" },
+                    ],
+                    annotations: [
+                      {
+                        name: "link",
+                        type: "object",
+                        title: "Link",
+                        fields: [
+                          {
+                            name: "href",
+                            type: "url",
+                            title: "URL",
+                            validation: (rule) =>
+                              rule.uri({ allowRelative: true, scheme: ["http", "https", "mailto"] }),
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  lists: [
+                    { title: "Bullet", value: "bullet" },
+                  ],
+                },
+              ],
+            }),
+            defineField({
               name: "highlights",
               title: "Highlights",
               type: "array",
@@ -146,6 +210,42 @@ export const cv = defineType({
               name: "endDate",
               title: "End Date",
               type: "date",
+            }),
+            defineField({
+              name: "description",
+              title: "Description",
+              type: "array",
+              of: [
+                {
+                  type: "block",
+                  styles: [{ title: "Normal", value: "normal" }],
+                  marks: {
+                    decorators: [
+                      { title: "Bold", value: "strong" },
+                      { title: "Italic", value: "em" },
+                    ],
+                    annotations: [
+                      {
+                        name: "link",
+                        type: "object",
+                        title: "Link",
+                        fields: [
+                          {
+                            name: "href",
+                            type: "url",
+                            title: "URL",
+                            validation: (rule) =>
+                              rule.uri({ allowRelative: true, scheme: ["http", "https", "mailto"] }),
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  lists: [
+                    { title: "Bullet", value: "bullet" },
+                  ],
+                },
+              ],
             }),
           ],
           preview: {
@@ -228,6 +328,77 @@ export const cv = defineType({
             select: {
               title: "language",
               subtitle: "proficiency",
+            },
+          },
+        },
+      ],
+    }),
+    defineField({
+      name: "sideProjects",
+      title: "Side Projects",
+      type: "array",
+      of: [
+        {
+          type: "object",
+          name: "sideProject",
+          fields: [
+            defineField({
+              name: "title",
+              title: "Title",
+              type: "string",
+              validation: (rule) => rule.required(),
+            }),
+            defineField({
+              name: "url",
+              title: "URL",
+              type: "url",
+            }),
+            defineField({
+              name: "description",
+              title: "Description",
+              type: "array",
+              of: [
+                {
+                  type: "block",
+                  styles: [{ title: "Normal", value: "normal" }],
+                  marks: {
+                    decorators: [
+                      { title: "Bold", value: "strong" },
+                      { title: "Italic", value: "em" },
+                    ],
+                    annotations: [
+                      {
+                        name: "link",
+                        type: "object",
+                        title: "Link",
+                        fields: [
+                          {
+                            name: "href",
+                            type: "url",
+                            title: "URL",
+                            validation: (rule) =>
+                              rule.uri({ allowRelative: true, scheme: ["http", "https", "mailto"] }),
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  lists: [
+                    { title: "Bullet", value: "bullet" },
+                  ],
+                },
+              ],
+            }),
+            defineField({
+              name: "year",
+              title: "Year",
+              type: "string",
+            }),
+          ],
+          preview: {
+            select: {
+              title: "title",
+              subtitle: "year",
             },
           },
         },

@@ -1,0 +1,68 @@
+---
+/**
+ * Visual grid helper overlay.
+ * Toggle with Shift + G.
+ */
+---
+
+<div class="grid-overlay" id="grid-overlay" aria-hidden="true">
+  <div class="grid-overlay-container">
+    {Array.from({ length: 12 }).map(() => (
+      <div class="grid-overlay-column">
+        <div class="grid-overlay-fill" />
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .grid-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--duration-normal) var(--ease-out);
+  }
+
+  .grid-overlay.is-visible {
+    opacity: 1;
+  }
+
+  .grid-overlay-container {
+    width: 100%;
+    max-width: var(--grid-max-width);
+    height: 100%;
+    margin-inline: auto;
+    padding-inline: var(--grid-margin);
+    display: grid;
+    grid-template-columns: repeat(var(--grid-columns), 1fr);
+    gap: var(--grid-gap);
+  }
+
+  .grid-overlay-column {
+    height: 100%;
+  }
+
+  .grid-overlay-fill {
+    height: 100%;
+    background: hsla(210, 100%, 56%, 0.06);
+    border-inline: 1px solid hsla(210, 100%, 56%, 0.12);
+  }
+
+  [data-theme="dark"] .grid-overlay-fill {
+    background: hsla(210, 100%, 70%, 0.05);
+    border-color: hsla(210, 100%, 70%, 0.1);
+  }
+</style>
+
+<script>
+  const overlay = document.getElementById("grid-overlay");
+
+  document.addEventListener("keydown", (e) => {
+    if (e.shiftKey && e.key.toLowerCase() === "g") {
+      e.preventDefault();
+      overlay?.classList.toggle("is-visible");
+    }
+  });
+</script>
