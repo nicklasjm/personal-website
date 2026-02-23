@@ -29,6 +29,8 @@ export interface Post {
   videoPoster?: SanityImage;
   body?: any[];
   externalLink?: string;
+  bodyImages?: SanityImage[];
+  galleries?: { images: SanityImage[] }[];
 }
 
 export interface SanityImage {
@@ -179,7 +181,17 @@ export async function getAllPosts(): Promise<Post[]> {
         ...,
         asset->
       },
-      externalLink
+      externalLink,
+      "bodyImages": body[_type == "image"]{
+        ...,
+        asset->
+      },
+      "galleries": body[_type == "gallery"]{
+        images[]{
+          ...,
+          asset->
+        }
+      }
     }`,
     )) ?? []
   );
