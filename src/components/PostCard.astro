@@ -93,7 +93,7 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
                 muted
                 loop
                 playsinline
-                preload="none"
+                preload="metadata"
                 class="post-card-video-overlay"
               />
             </div>
@@ -199,6 +199,7 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
     object-fit: cover;
     opacity: 0;
     z-index: 2;
+    pointer-events: none;
     transition: opacity var(--duration-slow) var(--ease-out);
   }
 
@@ -535,19 +536,25 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
     const card = wrapper.closest(".post-card");
     if (!card) return;
 
-    // Once enough data is buffered, show the video
-    function showVideo() {
-      video!.classList.add("is-playing");
-    }
+    // Ensure muted is set via JS (some browsers ignore the HTML attribute)
+    video.muted = true;
+
+    let hovering = false;
+
+    // Show overlay once the video actually starts rendering frames
+    video.addEventListener("playing", () => {
+      if (hovering) video.classList.add("is-playing");
+    });
 
     card.addEventListener("mouseenter", () => {
-      // Start loading + playing
-      video.play().then(showVideo).catch(() => {});
-      // If already ready, show immediately
-      if (video.readyState >= 3) showVideo();
+      hovering = true;
+      video.play().catch(() => {});
+      // If already playing / has data, show immediately
+      if (!video.paused) video.classList.add("is-playing");
     });
 
     card.addEventListener("mouseleave", () => {
+      hovering = false;
       video.classList.remove("is-playing");
       video.pause();
       video.currentTime = 0;
