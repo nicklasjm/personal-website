@@ -1,5 +1,5 @@
 ---
-import { urlFor, getFileUrl } from "@/lib/sanity";
+import { urlFor, getFileUrl, optimizedUrl, imageSrcSet } from "@/lib/sanity";
 import type { Post } from "@/lib/sanity";
 
 interface Props {
@@ -16,7 +16,11 @@ const href =
 const isExternal = post.category === "links" && post.externalLink;
 
 const imageUrl = post.featuredImage
-  ? urlFor(post.featuredImage).width(800).height(500).auto("format").url()
+  ? optimizedUrl(post.featuredImage, 800, { height: 500, fit: "crop" })
+  : null;
+
+const imageSrcSetStr = post.featuredImage
+  ? imageSrcSet(post.featuredImage, [400, 800, 1200], { fit: "crop" })
   : null;
 
 const videoUrl =
@@ -25,7 +29,7 @@ const videoUrl =
     : null;
 
 const posterUrl = post.videoPoster
-  ? urlFor(post.videoPoster).width(800).height(500).auto("format").url()
+  ? optimizedUrl(post.videoPoster, 800, { height: 500, fit: "crop" })
   : null;
 
 const date = new Date(post.publishedAt).toLocaleDateString("en-DK", {
@@ -38,13 +42,13 @@ const date = new Date(post.publishedAt).toLocaleDateString("en-DK", {
 const expandImages: string[] = [];
 if (post.featuredImage) {
   expandImages.push(
-    urlFor(post.featuredImage).width(1200).height(750).auto("format").url()
+    optimizedUrl(post.featuredImage, 1200, { height: 750, fit: "crop" })
   );
 }
 if (post.bodyImages) {
   for (const img of post.bodyImages) {
     expandImages.push(
-      urlFor(img).width(1200).height(750).auto("format").url()
+      optimizedUrl(img, 1200, { height: 750, fit: "crop" })
     );
   }
 }
@@ -53,7 +57,7 @@ if (post.galleries) {
     if (gallery.images) {
       for (const img of gallery.images) {
         expandImages.push(
-          urlFor(img).width(1200).height(750).auto("format").url()
+          optimizedUrl(img, 1200, { height: 750, fit: "crop" })
         );
       }
     }
@@ -88,6 +92,8 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
           ) : (
             <img
               src={imageUrl!}
+              srcset={imageSrcSetStr || undefined}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
               alt={post.featuredImage?.alt || post.title}
               loading="lazy"
               decoding="async"

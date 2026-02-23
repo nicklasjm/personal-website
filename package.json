@@ -15,7 +15,7 @@
     "@portabletext/to-html": "^2.0.13",
     "@sanity/astro": "^3.1.0",
     "@sanity/client": "^7.3.0",
-    "@sanity/image-url": "^1.1.0",
+    "@sanity/image-url": "^1.2.0",
     "@sanity/vision": "^3.75.0",
     "astro": "^5.7.0",
     "html2pdf.js": "^0.10.2",

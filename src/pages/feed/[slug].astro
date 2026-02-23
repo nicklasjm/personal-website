@@ -1,7 +1,7 @@
 ---
 import Base from "@/layouts/Base.astro";
 import Lightbox from "@/components/Lightbox.astro";
-import { getAllPosts, getPostBySlug, urlFor, getFileUrl } from "@/lib/sanity";
+import { getAllPosts, getPostBySlug, getFileUrl, optimizedUrl, imageSrcSet } from "@/lib/sanity";
 import { renderPortableText } from "@/lib/portable-text";
 
 export async function getStaticPaths() {
@@ -27,7 +27,11 @@ const date = new Date(post.publishedAt).toLocaleDateString("en-DK", {
 const bodyHtml = post.body ? renderPortableText(post.body) : "";
 
 const featuredImageUrl = post.featuredImage
-  ? urlFor(post.featuredImage).width(1200).auto("format").url()
+  ? optimizedUrl(post.featuredImage, 1200)
+  : null;
+
+const featuredSrcSet = post.featuredImage
+  ? imageSrcSet(post.featuredImage, [400, 800, 1200])
   : null;
 
 const featuredVideoUrl = post.featuredVideo?.asset?._ref
@@ -35,7 +39,7 @@ const featuredVideoUrl = post.featuredVideo?.asset?._ref
   : null;
 
 const videoPosterUrl = post.videoPoster
-  ? urlFor(post.videoPoster).width(1200).auto("format").url()
+  ? optimizedUrl(post.videoPoster, 1200)
   : null;
 ---
 
@@ -90,6 +94,8 @@ const videoPosterUrl = post.videoPoster
           ) : (
             <img
               src={featuredImageUrl!}
+              srcset={featuredSrcSet || undefined}
+              sizes="(max-width: 768px) 100vw, 720px"
               alt={post.featuredImage?.alt || post.title}
               loading="eager"
               decoding="async"

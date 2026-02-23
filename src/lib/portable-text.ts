@@ -1,5 +1,5 @@
 import { toHTML } from "@portabletext/to-html";
-import { urlFor, getFileUrl } from "./sanity";
+import { urlFor, getFileUrl, optimizedUrl, imageSrcSet } from "./sanity";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 
 interface PortableTextBlock {
@@ -12,15 +12,8 @@ export function renderPortableText(blocks: PortableTextBlock[]): string {
     components: {
       types: {
         image: ({ value }) => {
-          const src = urlFor(value as SanityImageSource)
-            .width(1200)
-            .auto("format")
-            .url();
-          const srcset = [
-            `${urlFor(value as SanityImageSource).width(400).auto("format").url()} 400w`,
-            `${urlFor(value as SanityImageSource).width(800).auto("format").url()} 800w`,
-            `${urlFor(value as SanityImageSource).width(1200).auto("format").url()} 1200w`,
-          ].join(", ");
+          const src = optimizedUrl(value as SanityImageSource, 1200);
+          const srcset = imageSrcSet(value as SanityImageSource, [400, 800, 1200]);
 
           const alt = value.alt || "";
           const caption = value.caption || "";
@@ -40,10 +33,7 @@ export function renderPortableText(blocks: PortableTextBlock[]): string {
             : value.video?.asset?.url || "";
 
           const posterUrl = value.poster
-            ? urlFor(value.poster as SanityImageSource)
-                .width(1200)
-                .auto("format")
-                .url()
+            ? optimizedUrl(value.poster as SanityImageSource, 1200)
             : "";
 
           const caption = value.caption || "";
@@ -72,10 +62,7 @@ export function renderPortableText(blocks: PortableTextBlock[]): string {
             // Carousel rendered as grid fallback in static HTML — carousel JS enhances if present
             let html = `<div class="carousel" role="region" aria-label="Image gallery" tabindex="0"><div class="carousel-track">`;
             images.forEach((img: any, i: number) => {
-              const src = urlFor(img as SanityImageSource)
-                .width(1200)
-                .auto("format")
-                .url();
+              const src = optimizedUrl(img as SanityImageSource, 1200);
               html += `<div class="carousel-slide" data-index="${i}">`;
               html += `<img src="${src}" alt="${img.alt || ""}" loading="lazy" decoding="async" data-lightbox data-lightbox-group="gallery" data-lightbox-src="${src}" />`;
               if (img.caption) {
@@ -100,14 +87,8 @@ export function renderPortableText(blocks: PortableTextBlock[]): string {
           // Grid layout
           let html = `<div class="gallery-grid">`;
           images.forEach((img: any) => {
-            const src = urlFor(img as SanityImageSource)
-              .width(800)
-              .auto("format")
-              .url();
-            const fullSrc = urlFor(img as SanityImageSource)
-              .width(1600)
-              .auto("format")
-              .url();
+            const src = optimizedUrl(img as SanityImageSource, 800);
+            const fullSrc = optimizedUrl(img as SanityImageSource, 1600);
             html += `<figure class="gallery-item">`;
             html += `<img src="${src}" alt="${img.alt || ""}" loading="lazy" decoding="async" data-lightbox data-lightbox-group="gallery" data-lightbox-src="${fullSrc}" />`;
             if (img.caption) {

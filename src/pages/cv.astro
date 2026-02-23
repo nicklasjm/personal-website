@@ -1,6 +1,7 @@
 ---
 import Base from "@/layouts/Base.astro";
-import { getCVData, urlFor } from "@/lib/sanity";
+import { getCVData, optimizedUrl } from "@/lib/sanity";
+import { renderPortableText } from "@/lib/portable-text";
 
 const cv = await getCVData();
 
@@ -34,7 +35,7 @@ function formatDate(dateStr?: string) {
               <div class="cv-profile">
                 {cv.photo && (
                   <img
-                    src={urlFor(cv.photo).width(120).height(120).auto("format").url()}
+                    src={optimizedUrl(cv.photo, 120, { height: 120, fit: "crop" })}
                     alt={cv.name}
                     class="cv-photo"
                     width="60"
@@ -84,7 +85,9 @@ function formatDate(dateStr?: string) {
                 )}
               </div>
 
-              {cv.summary && <p class="cv-summary">{cv.summary}</p>}
+              {cv.summary && cv.summary.length > 0 && (
+                <div class="cv-summary portable-text" set:html={renderPortableText(cv.summary)} />
+              )}
             </section>
 
             {/* Experience */}
@@ -106,6 +109,9 @@ function formatDate(dateStr?: string) {
                           {formatDate(job.startDate)} — {job.current ? "Present" : formatDate(job.endDate)}
                         </span>
                       </div>
+                      {job.description && job.description.length > 0 && (
+                        <div class="cv-description portable-text" set:html={renderPortableText(job.description)} />
+                      )}
                       {job.highlights && job.highlights.length > 0 && (
                         <ul class="cv-highlights">
                           {job.highlights.map((h) => (
@@ -141,6 +147,9 @@ function formatDate(dateStr?: string) {
                           </span>
                         )}
                       </div>
+                      {edu.description && edu.description.length > 0 && (
+                        <div class="cv-description portable-text" set:html={renderPortableText(edu.description)} />
+                      )}
                     </div>
                   ))}
                 </div>
@@ -175,6 +184,41 @@ function formatDate(dateStr?: string) {
                 <div class="cv-skill-items stagger-children">
                   {cv.tools.map((tool) => (
                     <span class="cv-tag">{tool}</span>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Side Projects */}
+            {cv.sideProjects && cv.sideProjects.length > 0 && (
+              <section class="cv-section animate-in">
+                <h3 class="cv-section-title">Side Projects</h3>
+                <div class="cv-list stagger-children">
+                  {cv.sideProjects.map((project) => (
+                    <div class="cv-item">
+                      <div class="cv-item-header">
+                        <div>
+                          <h4 class="cv-item-title">
+                            {project.url ? (
+                              <a href={project.url} target="_blank" rel="noopener noreferrer" class="cv-project-link">
+                                {project.title}
+                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="cv-project-arrow">
+                                  <line x1="4" y1="12" x2="12" y2="4" /><polyline points="6 4 12 4 12 10" />
+                                </svg>
+                              </a>
+                            ) : (
+                              project.title
+                            )}
+                          </h4>
+                        </div>
+                        {project.year && (
+                          <span class="cv-item-date">{project.year}</span>
+                        )}
+                      </div>
+                      {project.description && project.description.length > 0 && (
+                        <div class="cv-description portable-text" set:html={renderPortableText(project.description)} />
+                      )}
+                    </div>
                   ))}
                 </div>
               </section>
@@ -353,6 +397,32 @@ function formatDate(dateStr?: string) {
     flex-shrink: 0;
   }
 
+  .cv-description {
+    margin-top: var(--space-sm);
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+  }
+
+  .cv-description :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .cv-description :global(ul) {
+    padding-left: var(--space-lg);
+    list-style: disc;
+  }
+
+  .cv-description :global(li) {
+    margin-bottom: var(--space-xs);
+  }
+
+  .cv-description :global(a) {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
   .cv-highlights {
     margin-top: var(--space-sm);
     padding-left: var(--space-lg);
@@ -392,6 +462,28 @@ function formatDate(dateStr?: string) {
     background: var(--color-bg-elevated);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-full);
+  }
+
+  .cv-project-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-text-primary);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .cv-project-link:hover {
+    color: var(--color-accent);
+  }
+
+  .cv-project-arrow {
+    flex-shrink: 0;
+    opacity: 0.5;
+    transition: opacity var(--duration-fast) var(--ease-out);
+  }
+
+  .cv-project-link:hover .cv-project-arrow {
+    opacity: 1;
   }
 
   .cv-languages {

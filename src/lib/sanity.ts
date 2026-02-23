@@ -15,6 +15,33 @@ export function urlFor(source: SanityImageSource) {
   return builder.image(source);
 }
 
+/**
+ * Generate an optimized image URL with sensible defaults.
+ * Applies auto format (AVIF/WebP negotiation), quality, and fit.
+ */
+export function optimizedUrl(
+  source: SanityImageSource,
+  width: number,
+  opts?: { height?: number; quality?: number; fit?: "clip" | "crop" | "fill" | "fillmax" | "max" | "scale" | "min" },
+) {
+  let img = builder.image(source).width(width).auto("format").quality(opts?.quality ?? 80).fit(opts?.fit ?? "max");
+  if (opts?.height) img = img.height(opts.height);
+  return img.url();
+}
+
+/**
+ * Generate a srcset string for responsive images.
+ */
+export function imageSrcSet(
+  source: SanityImageSource,
+  widths: number[] = [400, 800, 1200],
+  opts?: { quality?: number; fit?: "clip" | "crop" | "fill" | "fillmax" | "max" | "scale" | "min" },
+) {
+  return widths
+    .map((w) => `${optimizedUrl(source, w, opts)} ${w}w`)
+    .join(", ");
+}
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface Post {
@@ -65,13 +92,14 @@ export interface CVData {
   location?: string;
   website?: string;
   linkedin?: string;
-  summary?: string;
+  summary?: any[];
   photo?: SanityImage;
   experience?: Experience[];
   education?: Education[];
   skills?: SkillGroup[];
   tools?: string[];
   languages?: Language[];
+  sideProjects?: SideProject[];
 }
 
 export interface Experience {
@@ -81,6 +109,7 @@ export interface Experience {
   startDate: string;
   endDate?: string;
   current?: boolean;
+  description?: any[];
   highlights?: string[];
 }
 
@@ -90,6 +119,14 @@ export interface Education {
   field?: string;
   startDate?: string;
   endDate?: string;
+  description?: any[];
+}
+
+export interface SideProject {
+  title: string;
+  url?: string;
+  description?: any[];
+  year?: string;
 }
 
 export interface SkillGroup {
@@ -265,6 +302,7 @@ export async function getCVData(): Promise<CVData | null> {
         startDate,
         endDate,
         current,
+        description,
         highlights
       },
       education[]{
@@ -272,7 +310,8 @@ export async function getCVData(): Promise<CVData | null> {
         degree,
         field,
         startDate,
-        endDate
+        endDate,
+        description
       },
       skills[]{
         category,
@@ -282,6 +321,12 @@ export async function getCVData(): Promise<CVData | null> {
       languages[]{
         language,
         proficiency
+      },
+      sideProjects[]{
+        title,
+        url,
+        description,
+        year
       }
     }`,
   );
