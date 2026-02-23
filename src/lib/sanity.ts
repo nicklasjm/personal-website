@@ -65,10 +65,11 @@ export interface CVData {
   location?: string;
   website?: string;
   linkedin?: string;
-  summary?: string;
+  summary?: any[];
   photo?: SanityImage;
   experience?: Experience[];
   education?: Education[];
+  sideProjects?: SideProject[];
   skills?: SkillGroup[];
   tools?: string[];
   languages?: Language[];
@@ -81,7 +82,14 @@ export interface Experience {
   startDate: string;
   endDate?: string;
   current?: boolean;
-  highlights?: string[];
+  highlights?: any[];
+}
+
+export interface SideProject {
+  name: string;
+  description?: string;
+  url?: string;
+  technologies?: string[];
 }
 
 export interface Education {
@@ -273,6 +281,12 @@ export async function getCVData(): Promise<CVData | null> {
         field,
         startDate,
         endDate
+      },
+      sideProjects[]{
+        name,
+        description,
+        url,
+        technologies
       },
       skills[]{
         category,

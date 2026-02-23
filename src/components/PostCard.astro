@@ -63,7 +63,7 @@ if (post.galleries) {
 const hasExpandContent = expandImages.length > 0 || post.excerpt;
 ---
 
-<article class="post-card hover-lift animate-in">
+<article class="post-card animate-in">
   <a
     href={href}
     class="post-card-link"
@@ -134,6 +134,7 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
     position: relative;
     border-radius: var(--radius-lg);
     overflow: hidden;
+    will-change: transform;
   }
 
   .post-card-link {
@@ -159,12 +160,7 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform var(--duration-slow) var(--ease-out);
-  }
-
-  .post-card-link:hover .post-card-image,
-  .post-card-link:hover .post-card-video {
-    transform: scale(1.02);
+    will-change: transform;
   }
 
   .post-card-info {
@@ -214,40 +210,27 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    color: var(--color-text-secondary);
+    color: hsl(210, 12%, 40%);
     opacity: 0;
-    transform: scale(0.9);
+    z-index: 3;
+    cursor: pointer;
+    will-change: transform, opacity;
     transition:
-      opacity var(--duration-normal) var(--ease-out),
-      transform var(--duration-normal) var(--ease-out),
       background-color var(--duration-fast) var(--ease-out),
       color var(--duration-fast) var(--ease-out),
       box-shadow var(--duration-fast) var(--ease-out);
-    z-index: 3;
-    cursor: pointer;
-  }
-
-  .post-card:hover .post-expand-toggle {
-    opacity: 1;
-    transform: scale(1);
   }
 
   .post-expand-toggle:hover {
     background: hsla(0, 0%, 100%, 0.95);
-    color: var(--color-text-primary);
+    color: hsl(210, 15%, 25%);
     box-shadow: var(--shadow-md);
-    transform: scale(1.08);
-  }
-
-  .post-expand-toggle:active {
-    transform: scale(0.95);
   }
 
   /* Always show toggle on touch devices */
   @media (hover: none) {
     .post-expand-toggle {
-      opacity: 0.8;
-      transform: scale(1);
+      opacity: 0.85;
     }
   }
 </style>
@@ -273,12 +256,6 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
     background: hsla(210, 20%, 10%, 0.4);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    opacity: 0;
-    transition: opacity 350ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .post-expanded-overlay.is-active .post-expanded-backdrop {
-    opacity: 1;
   }
 
   .post-expanded-card {
@@ -291,19 +268,7 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
     background: var(--color-bg);
     border-radius: var(--radius-lg);
     box-shadow: 0 24px 48px hsla(210, 15%, 25%, 0.15);
-    opacity: 0;
-    transform: scale(0.95);
-    filter: blur(4px);
-    transition:
-      opacity 350ms cubic-bezier(0.16, 1, 0.3, 1),
-      transform 350ms cubic-bezier(0.16, 1, 0.3, 1),
-      filter 350ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .post-expanded-overlay.is-active .post-expanded-card {
-    opacity: 1;
-    transform: scale(1);
-    filter: blur(0);
+    will-change: transform, opacity;
   }
 
   /* Close button */
@@ -321,18 +286,18 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    color: var(--color-text-secondary);
+    color: hsl(210, 12%, 40%);
     z-index: 2;
     cursor: pointer;
     transition:
-      background-color 150ms cubic-bezier(0.16, 1, 0.3, 1),
-      color 150ms cubic-bezier(0.16, 1, 0.3, 1),
-      box-shadow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+      background-color var(--duration-fast) var(--ease-out),
+      color var(--duration-fast) var(--ease-out),
+      box-shadow var(--duration-fast) var(--ease-out);
   }
 
   .post-expanded-close:hover {
     background: hsla(0, 0%, 100%, 0.95);
-    color: var(--color-text-primary);
+    color: hsl(210, 15%, 25%);
     box-shadow: 0 4px 12px hsla(210, 15%, 25%, 0.08);
   }
 
@@ -345,8 +310,8 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
 
   .post-expanded-carousel-track {
     display: flex;
-    transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
     touch-action: pan-y;
+    will-change: transform;
   }
 
   .post-expanded-carousel-slide {
@@ -376,13 +341,13 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-full);
-    color: var(--color-text-primary);
+    color: hsl(210, 15%, 25%);
     box-shadow: var(--shadow-sm);
     z-index: 2;
     cursor: pointer;
     transition:
-      background-color 150ms cubic-bezier(0.16, 1, 0.3, 1),
-      box-shadow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+      background-color var(--duration-fast) var(--ease-out),
+      box-shadow var(--duration-fast) var(--ease-out);
   }
 
   .post-expanded-carousel-btn:hover {
@@ -412,11 +377,11 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
     background: var(--color-border);
     border: none;
     cursor: pointer;
-    transition: background-color 150ms cubic-bezier(0.16, 1, 0.3, 1);
+    transition: background-color var(--duration-fast) var(--ease-out);
   }
 
   .post-expanded-carousel-dot.is-active {
-    background: var(--color-text-secondary);
+    background: hsl(210, 12%, 40%);
   }
 
   /* Body content */
@@ -434,7 +399,7 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
   .post-expanded-title a {
     text-decoration: none;
     color: inherit;
-    transition: color 150ms cubic-bezier(0.16, 1, 0.3, 1);
+    transition: color var(--duration-fast) var(--ease-out);
   }
 
   .post-expanded-title a:hover {
@@ -444,7 +409,7 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
   .post-expanded-excerpt {
     font-size: var(--text-base);
     line-height: var(--leading-relaxed);
-    color: var(--color-text-secondary);
+    color: hsl(210, 10%, 40%);
     margin-bottom: var(--space-md);
   }
 
@@ -453,7 +418,7 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
     align-items: center;
     gap: var(--space-sm);
     font-size: var(--text-xs);
-    color: var(--color-text-muted);
+    color: hsl(210, 8%, 52%);
   }
 
   .post-expanded-category {
@@ -469,17 +434,62 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
   body.post-expanded-open {
     overflow: hidden;
   }
-
-  /* Reduced motion */
-  @media (prefers-reduced-motion: reduce) {
-    .post-expanded-backdrop,
-    .post-expanded-card {
-      transition-duration: 0.01ms !important;
-    }
-  }
 </style>
 
 <script>
+  import { animate } from "motion";
+
+  // ── Reduced motion check ─────────────────────────────────────────────────
+
+  const prefersReducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+
+  function springConfig() {
+    if (prefersReducedMotion) return { duration: 0.01 };
+    return { type: "spring" as const, stiffness: 350, damping: 25 };
+  }
+
+  function smoothConfig(duration = 0.3) {
+    if (prefersReducedMotion) return { duration: 0.01 };
+    return { duration, easing: [0.16, 1, 0.3, 1] as [number, number, number, number] };
+  }
+
+  // ── Card hover animations with motion.dev ────────────────────────────────
+
+  document.querySelectorAll<HTMLElement>(".post-card").forEach((card) => {
+    const media = card.querySelector<HTMLElement>(
+      ".post-card-image, .post-card-video",
+    );
+    const toggle = card.querySelector<HTMLElement>(".post-expand-toggle");
+
+    card.addEventListener("mouseenter", () => {
+      animate(card, { y: -3 }, springConfig());
+      if (media) animate(media, { scale: 1.03 }, springConfig());
+      if (toggle) {
+        animate(toggle, { opacity: 1, scale: 1 }, smoothConfig(0.25));
+      }
+    });
+
+    card.addEventListener("mouseleave", () => {
+      animate(card, { y: 0 }, springConfig());
+      if (media) animate(media, { scale: 1 }, springConfig());
+      if (toggle) {
+        animate(toggle, { opacity: 0, scale: 0.9 }, smoothConfig(0.2));
+      }
+    });
+
+    // Toggle hover
+    if (toggle) {
+      toggle.addEventListener("mouseenter", () => {
+        animate(toggle, { scale: 1.1 }, springConfig());
+      });
+      toggle.addEventListener("mouseleave", () => {
+        animate(toggle, { scale: 1 }, springConfig());
+      });
+    }
+  });
+
   // Autoplay video on hover
   document.querySelectorAll(".post-card .video-wrapper").forEach((wrapper) => {
     const video = wrapper.querySelector("video");
@@ -503,37 +513,44 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
   let activeOverlay: HTMLElement | null = null;
   let activeTrigger: HTMLElement | null = null;
 
-  function closeExpanded(animate = true) {
+  async function closeExpanded(immediate = false) {
     if (!activeOverlay) return;
     const overlay = activeOverlay;
     const trigger = activeTrigger;
 
-    if (animate) {
-      overlay.classList.remove("is-active");
-      const onEnd = () => {
-        overlay.remove();
-        document.body.classList.remove("post-expanded-open");
-      };
-      overlay
-        .querySelector(".post-expanded-card")
-        ?.addEventListener("transitionend", onEnd, { once: true });
-      // Fallback in case transitionend doesn't fire
-      setTimeout(onEnd, 450);
+    activeOverlay = null;
+    activeTrigger = null;
+
+    if (immediate) {
+      overlay.remove();
+      document.body.classList.remove("post-expanded-open");
     } else {
+      const backdrop = overlay.querySelector<HTMLElement>(
+        ".post-expanded-backdrop",
+      );
+      const card = overlay.querySelector<HTMLElement>(".post-expanded-card");
+
+      const animations = [
+        backdrop &&
+          animate(backdrop, { opacity: 0 }, smoothConfig(0.25)).finished,
+        card &&
+          animate(
+            card,
+            { opacity: 0, scale: 0.95, filter: "blur(4px)" },
+            smoothConfig(0.25),
+          ).finished,
+      ].filter(Boolean);
+
+      await Promise.all(animations);
       overlay.remove();
       document.body.classList.remove("post-expanded-open");
     }
 
-    activeOverlay = null;
-    activeTrigger = null;
-
-    // Return focus to the toggle that opened it
     if (trigger) trigger.focus();
   }
 
   function openExpanded(btn: HTMLElement) {
-    // Close existing overlay immediately if one is open
-    if (activeOverlay) closeExpanded(false);
+    if (activeOverlay) closeExpanded(true);
 
     const images: string[] = JSON.parse(btn.dataset.expandImages || "[]");
     const excerpt = btn.dataset.expandExcerpt || "";
@@ -543,7 +560,6 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
     const category = btn.dataset.expandCategory || "";
     const isExternal = btn.dataset.expandExternal === "true";
 
-    // Build overlay element
     const overlay = document.createElement("div");
     overlay.className = "post-expanded-overlay";
     overlay.setAttribute("role", "dialog");
@@ -590,7 +606,6 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
       `;
     }
 
-    // Build body HTML
     const excerptHTML = excerpt
       ? `<p class="post-expanded-excerpt">${excerpt}</p>`
       : "";
@@ -627,30 +642,45 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
     document.body.appendChild(overlay);
     document.body.classList.add("post-expanded-open");
 
-    // Trigger enter animation on next frame
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        overlay.classList.add("is-active");
-      });
-    });
-
     activeOverlay = overlay;
     activeTrigger = btn;
+
+    // Animate entrance with motion.dev
+    const backdrop = overlay.querySelector<HTMLElement>(
+      ".post-expanded-backdrop",
+    );
+    const card = overlay.querySelector<HTMLElement>(".post-expanded-card");
+
+    if (backdrop) {
+      backdrop.style.opacity = "0";
+      animate(backdrop, { opacity: 1 }, smoothConfig(0.35));
+    }
+
+    if (card) {
+      Object.assign(card.style, {
+        opacity: "0",
+        transform: "scale(0.95)",
+        filter: "blur(4px)",
+      });
+      animate(
+        card,
+        { opacity: 1, scale: 1, filter: "blur(0px)" },
+        smoothConfig(0.35),
+      );
+    }
 
     // Focus the close button
     const closeBtn =
       overlay.querySelector<HTMLButtonElement>(".post-expanded-close");
     closeBtn?.focus();
 
-    // ── Close handlers ──
-
+    // Close handlers
     overlay
       .querySelector(".post-expanded-backdrop")!
       .addEventListener("click", () => closeExpanded());
     closeBtn!.addEventListener("click", () => closeExpanded());
 
-    // ── Carousel logic ──
-
+    // Carousel logic
     if (images.length > 1) {
       const track = overlay.querySelector<HTMLElement>(
         ".post-expanded-carousel-track",
@@ -669,7 +699,11 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
 
       function goTo(index: number) {
         current = ((index % total) + total) % total;
-        track!.style.transform = `translateX(-${current * 100}%)`;
+        animate(
+          track!,
+          { x: `${-current * 100}%` },
+          smoothConfig(0.35),
+        );
         dots.forEach((dot, i) =>
           dot.classList.toggle("is-active", i === current),
         );
@@ -727,14 +761,12 @@ const hasExpandContent = expandImages.length > 0 || post.excerpt;
     }
   }
 
-  // ── Global keyboard handler ──
-
+  // Global keyboard handler
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeExpanded();
   });
 
-  // ── Attach expand handlers ──
-
+  // Attach expand handlers
   document
     .querySelectorAll<HTMLElement>(".post-expand-toggle")
     .forEach((btn) => {

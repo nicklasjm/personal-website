@@ -44,8 +44,36 @@ export const cv = defineType({
     defineField({
       name: "summary",
       title: "Summary",
-      type: "text",
-      rows: 4,
+      type: "array",
+      of: [
+        {
+          type: "block",
+          styles: [{ title: "Normal", value: "normal" }],
+          lists: [],
+          marks: {
+            decorators: [
+              { title: "Bold", value: "strong" },
+              { title: "Italic", value: "em" },
+            ],
+            annotations: [
+              {
+                name: "link",
+                type: "object",
+                title: "Link",
+                fields: [
+                  {
+                    name: "href",
+                    type: "url",
+                    title: "URL",
+                    validation: (rule: any) =>
+                      rule.uri({ allowRelative: true }),
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
     }),
     defineField({
       name: "photo",
@@ -100,7 +128,35 @@ export const cv = defineType({
               name: "highlights",
               title: "Highlights",
               type: "array",
-              of: [{ type: "string" }],
+              of: [
+                {
+                  type: "block",
+                  styles: [{ title: "Normal", value: "normal" }],
+                  lists: [{ title: "Bullet", value: "bullet" }],
+                  marks: {
+                    decorators: [
+                      { title: "Bold", value: "strong" },
+                      { title: "Italic", value: "em" },
+                    ],
+                    annotations: [
+                      {
+                        name: "link",
+                        type: "object",
+                        title: "Link",
+                        fields: [
+                          {
+                            name: "href",
+                            type: "url",
+                            title: "URL",
+                            validation: (rule: any) =>
+                              rule.uri({ allowRelative: true }),
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              ],
             }),
           ],
           preview: {
@@ -152,6 +208,49 @@ export const cv = defineType({
             select: {
               title: "degree",
               subtitle: "institution",
+            },
+          },
+        },
+      ],
+    }),
+    defineField({
+      name: "sideProjects",
+      title: "Side Projects",
+      type: "array",
+      of: [
+        {
+          type: "object",
+          name: "sideProject",
+          fields: [
+            defineField({
+              name: "name",
+              title: "Project Name",
+              type: "string",
+              validation: (rule) => rule.required(),
+            }),
+            defineField({
+              name: "description",
+              title: "Description",
+              type: "text",
+              rows: 2,
+            }),
+            defineField({
+              name: "url",
+              title: "URL",
+              type: "url",
+            }),
+            defineField({
+              name: "technologies",
+              title: "Technologies",
+              type: "array",
+              of: [{ type: "string" }],
+              options: { layout: "tags" },
+            }),
+          ],
+          preview: {
+            select: {
+              title: "name",
+              subtitle: "description",
             },
           },
         },
