@@ -80,6 +80,20 @@ export const post = defineType({
       },
     }),
     defineField({
+      name: "cardLayout",
+      title: "Card Layout",
+      type: "string",
+      description: "How this post appears in the feed",
+      options: {
+        list: [
+          { title: "Default", value: "default" },
+          { title: "Video", value: "video" },
+        ],
+        layout: "radio",
+      },
+      initialValue: "default",
+    }),
+    defineField({
       name: "body",
       title: "Body",
       type: "array",

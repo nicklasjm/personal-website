@@ -1,0 +1,215 @@
+---
+import { getFileUrl, optimizedUrl, imageSrcSet } from "@/lib/sanity";
+import type { Post } from "@/lib/sanity";
+
+interface Props {
+  post: Post;
+}
+
+const { post } = Astro.props;
+
+const href =
+  post.category === "links" && post.externalLink
+    ? post.externalLink
+    : `/feed/${post.slug.current}`;
+
+const isExternal = post.category === "links" && post.externalLink;
+
+const videoUrl =
+  post.featuredVideo?.asset?._ref
+    ? getFileUrl(post.featuredVideo.asset._ref)
+    : null;
+
+const posterUrl = post.videoPoster
+  ? optimizedUrl(post.videoPoster, 800, { height: 500, fit: "crop" })
+  : null;
+
+const imageUrl = post.featuredImage
+  ? optimizedUrl(post.featuredImage, 800, { height: 500, fit: "crop" })
+  : null;
+
+const posterSrcSet = post.videoPoster
+  ? imageSrcSet(post.videoPoster, [400, 800, 1200], { fit: "crop" })
+  : post.featuredImage
+    ? imageSrcSet(post.featuredImage, [400, 800, 1200], { fit: "crop" })
+    : null;
+
+const thumbSrc = posterUrl || imageUrl;
+
+const date = new Date(post.publishedAt).toLocaleDateString("en-DK", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
+---
+
+<article class="post-card hover-lift animate-in">
+  <a
+    href={href}
+    class="post-card-link"
+    target={isExternal ? "_blank" : undefined}
+    rel={isExternal ? "noopener noreferrer" : undefined}
+  >
+    {thumbSrc && (
+      <div class="post-card-media">
+        <div class="video-hover-wrapper">
+          <img
+            src={thumbSrc}
+            srcset={posterSrcSet || undefined}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
+            alt={post.featuredImage?.alt || post.title}
+            loading="lazy"
+            decoding="async"
+            class="post-card-poster"
+          />
+          {videoUrl && (
+            <video
+              src={videoUrl}
+              muted
+              loop
+              playsinline
+              preload="metadata"
+              class="post-card-video"
+            />
+          )}
+        </div>
+      </div>
+    )}
+    <div class="post-card-info">
+      <h3 class="post-card-title">{post.title}</h3>
+      <div class="post-card-meta">
+        <span class="post-card-category">{post.category}</span>
+        <span class="post-card-date">{date}</span>
+        {isExternal && <span class="post-card-external" aria-label="External link">&nearr;</span>}
+      </div>
+    </div>
+  </a>
+</article>
+
+<style>
+  .post-card {
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .post-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .post-card-link:hover {
+    color: inherit;
+  }
+
+  .post-card-media {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--color-bg-elevated);
+  }
+
+  .video-hover-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .post-card-poster {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: relative;
+    z-index: 1;
+    transition: transform var(--duration-slow) var(--ease-out);
+  }
+
+  .post-card-link:hover .post-card-poster {
+    transform: scale(1.02);
+  }
+
+  .post-card-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    z-index: 2;
+    pointer-events: none;
+    transition: opacity var(--duration-slow) var(--ease-out);
+  }
+
+  .post-card-video.is-playing {
+    opacity: 1;
+  }
+
+  .post-card-link:hover .post-card-video.is-playing {
+    transform: scale(1.02);
+  }
+
+  .post-card-info {
+    padding-top: var(--space-md);
+  }
+
+  .post-card-title {
+    font-size: var(--text-base);
+    font-weight: 500;
+    line-height: var(--leading-normal);
+    margin-bottom: var(--space-xs);
+  }
+
+  .post-card-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+
+  .post-card-category {
+    text-transform: capitalize;
+  }
+
+  .post-card-category::after {
+    content: "·";
+    margin-left: var(--space-sm);
+  }
+
+  .post-card-external {
+    font-size: var(--text-sm);
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>(".video-hover-wrapper").forEach((wrapper) => {
+    const video = wrapper.querySelector<HTMLVideoElement>(".post-card-video");
+    if (!video) return;
+
+    const card = wrapper.closest(".post-card");
+    if (!card) return;
+
+    video.muted = true;
+
+    let hovering = false;
+
+    video.addEventListener("playing", () => {
+      if (hovering) video.classList.add("is-playing");
+    });
+
+    card.addEventListener("mouseenter", () => {
+      hovering = true;
+      video.play().catch(() => {});
+      if (!video.paused) video.classList.add("is-playing");
+    });
+
+    card.addEventListener("mouseleave", () => {
+      hovering = false;
+      video.classList.remove("is-playing");
+      video.pause();
+      video.currentTime = 0;
+    });
+  });
+</script>

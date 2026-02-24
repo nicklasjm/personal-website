@@ -50,6 +50,7 @@ export interface Post {
   slug: { current: string };
   publishedAt: string;
   category: "work" | "playground" | "thoughts" | "links" | "photography";
+  cardLayout?: "default" | "video";
   excerpt?: string;
   featuredImage?: SanityImage;
   featuredVideo?: SanityFile;
@@ -205,6 +206,7 @@ export async function getAllPosts(): Promise<Post[]> {
       slug,
       publishedAt,
       category,
+      cardLayout,
       excerpt,
       featuredImage{
         ...,
@@ -242,6 +244,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
       slug,
       publishedAt,
       category,
+      cardLayout,
       excerpt,
       featuredImage{
         ...,
