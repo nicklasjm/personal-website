@@ -1,0 +1,456 @@
+---
+// Singleton overlay — rendered once in the layout (like Lightbox).
+// Populated at runtime via safe DOM APIs (no innerHTML with user data).
+---
+
+<div id="post-expand" class="post-expanded-overlay" role="dialog" aria-modal="true" aria-label="Post detail" style="display:none">
+  <div class="post-expanded-backdrop"></div>
+  <div class="post-expanded-card">
+    <button class="post-expanded-close" type="button" aria-label="Close">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="4" y1="4" x2="12" y2="12" />
+        <line x1="12" y1="4" x2="4" y2="12" />
+      </svg>
+    </button>
+    <div class="post-expanded-carousel">
+      <div class="post-expanded-carousel-track"></div>
+      <button class="post-expanded-carousel-prev" type="button" aria-label="Previous image">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 16 7 10 13 4" /></svg>
+      </button>
+      <button class="post-expanded-carousel-next" type="button" aria-label="Next image">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 4 13 10 7 16" /></svg>
+      </button>
+      <div class="post-expanded-carousel-dots"></div>
+    </div>
+    <div class="post-expanded-body">
+      <h3 class="post-expanded-title">
+        <a href="#"></a>
+      </h3>
+      <p class="post-expanded-excerpt"></p>
+      <div class="post-expanded-meta">
+        <span class="post-expanded-category"></span>
+        <span class="post-expanded-date"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Global styles: this is a singleton with well-namespaced classes,
+     and it creates dynamic child elements via JS that need styling. -->
+<style is:global>
+  .post-expanded-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg);
+  }
+
+  .post-expanded-backdrop {
+    position: absolute;
+    inset: 0;
+    background: hsla(210, 20%, 10%, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    opacity: 0;
+    transition: opacity 350ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .post-expanded-overlay.is-active .post-expanded-backdrop {
+    opacity: 1;
+  }
+
+  .post-expanded-card {
+    position: relative;
+    max-width: 640px;
+    width: 100%;
+    max-height: 85vh;
+    overflow: hidden;
+    overflow-y: auto;
+    background: var(--color-bg);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 24px 48px hsla(210, 15%, 25%, 0.15);
+    opacity: 0;
+    transform: scale(0.95);
+    filter: blur(4px);
+    transition:
+      opacity 350ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 350ms cubic-bezier(0.16, 1, 0.3, 1),
+      filter 350ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .post-expanded-overlay.is-active .post-expanded-card {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+
+  /* Close button */
+  .post-expanded-close {
+    position: absolute;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: hsla(210, 25%, 97%, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-secondary);
+    z-index: 2;
+    cursor: pointer;
+    transition:
+      background-color 150ms cubic-bezier(0.16, 1, 0.3, 1),
+      color 150ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .post-expanded-close:hover {
+    background: hsla(0, 0%, 100%, 0.95);
+    color: var(--color-text-primary);
+    box-shadow: 0 4px 12px hsla(210, 15%, 25%, 0.08);
+  }
+
+  /* Carousel */
+  .post-expanded-carousel {
+    position: relative;
+    overflow: hidden;
+    background: var(--color-bg-elevated);
+  }
+
+  .post-expanded-carousel-track {
+    display: flex;
+    transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+    touch-action: pan-y;
+  }
+
+  .post-expanded-carousel-slide {
+    flex: 0 0 100%;
+    min-width: 0;
+    aspect-ratio: 16 / 10;
+  }
+
+  .post-expanded-carousel-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .post-expanded-carousel-prev,
+  .post-expanded-carousel-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: hsla(210, 25%, 97%, 0.9);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-sm);
+    z-index: 2;
+    cursor: pointer;
+    transition:
+      background-color 150ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .post-expanded-carousel-prev:hover,
+  .post-expanded-carousel-next:hover {
+    background: var(--color-bg);
+    box-shadow: var(--shadow-md);
+  }
+
+  .post-expanded-carousel-prev {
+    left: var(--space-sm);
+  }
+
+  .post-expanded-carousel-next {
+    right: var(--space-sm);
+  }
+
+  .post-expanded-carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: var(--space-sm) 0;
+  }
+
+  .post-expanded-carousel-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-full);
+    background: var(--color-border);
+    border: none;
+    cursor: pointer;
+    transition: background-color 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .post-expanded-carousel-dot.is-active {
+    background: var(--color-text-secondary);
+  }
+
+  /* Body content */
+  .post-expanded-body {
+    padding: var(--space-lg);
+  }
+
+  .post-expanded-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    line-height: var(--leading-tight);
+    margin-bottom: var(--space-sm);
+  }
+
+  .post-expanded-title a {
+    text-decoration: none;
+    color: inherit;
+    transition: color 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .post-expanded-title a:hover {
+    color: var(--color-accent);
+  }
+
+  .post-expanded-excerpt {
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-md);
+  }
+
+  .post-expanded-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+
+  .post-expanded-category {
+    text-transform: capitalize;
+  }
+
+  .post-expanded-category::after {
+    content: "·";
+    margin-left: var(--space-sm);
+  }
+
+  /* Body scroll lock */
+  body.post-expanded-open {
+    overflow: hidden;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .post-expanded-backdrop,
+    .post-expanded-card {
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+
+<script>
+  const overlay = document.getElementById("post-expand")!;
+  const card = overlay.querySelector<HTMLElement>(".post-expanded-card")!;
+  const closeBtn = overlay.querySelector<HTMLButtonElement>(".post-expanded-close")!;
+  const backdrop = overlay.querySelector<HTMLElement>(".post-expanded-backdrop")!;
+  const carousel = overlay.querySelector<HTMLElement>(".post-expanded-carousel")!;
+  const track = overlay.querySelector<HTMLElement>(".post-expanded-carousel-track")!;
+  const prevBtn = overlay.querySelector<HTMLButtonElement>(".post-expanded-carousel-prev")!;
+  const nextBtn = overlay.querySelector<HTMLButtonElement>(".post-expanded-carousel-next")!;
+  const dotsContainer = overlay.querySelector<HTMLElement>(".post-expanded-carousel-dots")!;
+  const titleLink = overlay.querySelector<HTMLAnchorElement>(".post-expanded-title a")!;
+  const excerptEl = overlay.querySelector<HTMLParagraphElement>(".post-expanded-excerpt")!;
+  const categoryEl = overlay.querySelector<HTMLElement>(".post-expanded-category")!;
+  const dateEl = overlay.querySelector<HTMLElement>(".post-expanded-date")!;
+
+  let activeTrigger: HTMLElement | null = null;
+  let current = 0;
+  let total = 0;
+
+  // ── Open / Close ────────────────────────────────────────────────────────────
+
+  function open(btn: HTMLElement) {
+    const images: string[] = JSON.parse(btn.dataset.expandImages || "[]");
+    const excerpt = btn.dataset.expandExcerpt || "";
+    const title = btn.dataset.expandTitle || "";
+    const href = btn.dataset.expandHref || "#";
+    const date = btn.dataset.expandDate || "";
+    const category = btn.dataset.expandCategory || "";
+    const isExternal = btn.dataset.expandExternal === "true";
+
+    // Populate text safely — no innerHTML with CMS data
+    titleLink.textContent = title;
+    titleLink.href = href;
+    if (isExternal) {
+      titleLink.target = "_blank";
+      titleLink.rel = "noopener noreferrer";
+    } else {
+      titleLink.removeAttribute("target");
+      titleLink.removeAttribute("rel");
+    }
+
+    excerptEl.textContent = excerpt;
+    excerptEl.style.display = excerpt ? "" : "none";
+    categoryEl.textContent = category;
+    dateEl.textContent = date;
+
+    // Build carousel slides with safe DOM APIs
+    track.replaceChildren();
+    dotsContainer.replaceChildren();
+    total = images.length;
+    current = 0;
+
+    if (total > 0) {
+      carousel.style.display = "";
+
+      images.forEach((url, i) => {
+        const slide = document.createElement("div");
+        slide.className = "post-expanded-carousel-slide";
+        const img = document.createElement("img");
+        img.src = url;
+        img.alt = "";
+        img.loading = i === 0 ? "eager" : "lazy";
+        img.decoding = "async";
+        slide.appendChild(img);
+        track.appendChild(slide);
+      });
+
+      if (total > 1) {
+        prevBtn.style.display = "";
+        nextBtn.style.display = "";
+        dotsContainer.style.display = "";
+
+        images.forEach((_, i) => {
+          const dot = document.createElement("button");
+          dot.className = "post-expanded-carousel-dot" + (i === 0 ? " is-active" : "");
+          dot.type = "button";
+          dot.ariaLabel = `Go to image ${i + 1}`;
+          dot.addEventListener("click", (e) => {
+            e.stopPropagation();
+            goTo(i);
+          });
+          dotsContainer.appendChild(dot);
+        });
+      } else {
+        prevBtn.style.display = "none";
+        nextBtn.style.display = "none";
+        dotsContainer.style.display = "none";
+      }
+
+      track.style.transform = "translateX(0)";
+    } else {
+      carousel.style.display = "none";
+    }
+
+    // Show overlay
+    document.body.classList.add("post-expanded-open");
+    overlay.style.display = "";
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        overlay.classList.add("is-active");
+      });
+    });
+
+    activeTrigger = btn;
+    closeBtn.focus();
+  }
+
+  function close(animate = true) {
+    const trigger = activeTrigger;
+
+    if (animate) {
+      overlay.classList.remove("is-active");
+      const onEnd = () => {
+        overlay.style.display = "none";
+        document.body.classList.remove("post-expanded-open");
+      };
+      card.addEventListener("transitionend", onEnd, { once: true });
+      setTimeout(onEnd, 450);
+    } else {
+      overlay.classList.remove("is-active");
+      overlay.style.display = "none";
+      document.body.classList.remove("post-expanded-open");
+    }
+
+    activeTrigger = null;
+    if (trigger) trigger.focus();
+  }
+
+  // ── Carousel navigation ─────────────────────────────────────────────────────
+
+  function goTo(index: number) {
+    current = ((index % total) + total) % total;
+    track.style.transform = `translateX(-${current * 100}%)`;
+    dotsContainer.querySelectorAll(".post-expanded-carousel-dot").forEach((dot, i) => {
+      dot.classList.toggle("is-active", i === current);
+    });
+  }
+
+  prevBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    goTo(current - 1);
+  });
+
+  nextBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    goTo(current + 1);
+  });
+
+  // Touch / swipe
+  let startX = 0;
+  let isDragging = false;
+
+  carousel.addEventListener("touchstart", (e) => {
+    startX = e.touches[0].clientX;
+    isDragging = true;
+  }, { passive: true });
+
+  carousel.addEventListener("touchend", (e) => {
+    if (!isDragging) return;
+    isDragging = false;
+    const diff = startX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      goTo(diff > 0 ? current + 1 : current - 1);
+    }
+  }, { passive: true });
+
+  // ── Close handlers ──────────────────────────────────────────────────────────
+
+  backdrop.addEventListener("click", () => close());
+  closeBtn.addEventListener("click", () => close());
+
+  // ── Keyboard ────────────────────────────────────────────────────────────────
+
+  document.addEventListener("keydown", (e) => {
+    if (overlay.style.display === "none") return;
+    if (e.key === "Escape") close();
+    if (e.key === "ArrowLeft") goTo(current - 1);
+    if (e.key === "ArrowRight") goTo(current + 1);
+  });
+
+  // ── Event delegation for expand toggles ─────────────────────────────────────
+
+  document.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>(".post-expand-toggle");
+    if (btn) {
+      e.preventDefault();
+      e.stopPropagation();
+      open(btn);
+    }
+  });
+</script>

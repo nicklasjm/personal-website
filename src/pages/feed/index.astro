@@ -1,6 +1,7 @@
 ---
 import Base from "@/layouts/Base.astro";
 import PostCard from "@/components/PostCard.astro";
+import PostCardVideo from "@/components/PostCardVideo.astro";
 import { getAllPosts } from "@/lib/sanity";
 
 const posts = await getAllPosts();
@@ -46,7 +47,11 @@ const categories = ["all", "work", "playground", "thoughts", "links", "photograp
             <div class="feed-grid stagger-children">
               {postsByYear[year].map((post) => (
                 <div class="feed-item" data-category={post.category}>
-                  <PostCard post={post} />
+                  {post.cardLayout === "video" ? (
+                    <PostCardVideo post={post} />
+                  ) : (
+                    <PostCard post={post} />
+                  )}
                 </div>
               ))}
             </div>
