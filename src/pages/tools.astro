@@ -1,0 +1,180 @@
+---
+import Base from "@/layouts/Base.astro";
+import { getAllTools, optimizedUrl } from "@/lib/sanity";
+import type { Tool } from "@/lib/sanity";
+
+const tools = await getAllTools();
+
+// Group tools by category
+const categoryLabels: Record<string, string> = {
+  design: "Design",
+  development: "Development",
+  productivity: "Productivity",
+  communication: "Communication",
+  other: "Other",
+};
+
+const toolsByCategory = tools.reduce<Record<string, Tool[]>>((acc, tool) => {
+  const cat = tool.category || "other";
+  if (!acc[cat]) acc[cat] = [];
+  acc[cat].push(tool);
+  return acc;
+}, {});
+
+const categoryOrder = ["design", "development", "productivity", "communication", "other"];
+const categories = categoryOrder.filter((cat) => toolsByCategory[cat]?.length);
+---
+
+<Base title="Tools — Nicklas Jakobsen" description="Software and online tools I use and recommend.">
+  <section class="tools container">
+    <header class="tools-header animate-in">
+      <h1 class="tools-title">Tools</h1>
+    </header>
+
+    {categories.map((cat) => (
+      <section class="tools-group animate-in">
+        <h2 class="tools-category">{categoryLabels[cat]}</h2>
+        <div class="tools-grid stagger-children">
+          {toolsByCategory[cat].map((tool) => (
+            <div class="tool-card">
+              {tool.icon && (
+                <img
+                  src={optimizedUrl(tool.icon, 48, { height: 48, fit: "crop" })}
+                  alt=""
+                  class="tool-icon"
+                  width="32"
+                  height="32"
+                  loading="lazy"
+                  decoding="async"
+                />
+              )}
+              <div class="tool-info">
+                {tool.url ? (
+                  <a href={tool.url} target="_blank" rel="noopener noreferrer" class="tool-name">
+                    {tool.name}
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="tool-arrow">
+                      <line x1="4" y1="12" x2="12" y2="4" /><polyline points="6 4 12 4 12 10" />
+                    </svg>
+                  </a>
+                ) : (
+                  <span class="tool-name">{tool.name}</span>
+                )}
+                {tool.description && <p class="tool-description">{tool.description}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    ))}
+
+    {tools.length === 0 && <p class="tools-empty text-muted">Tools coming soon.</p>}
+  </section>
+</Base>
+
+<style>
+  .tools {
+    padding-top: var(--space-3xl);
+    padding-bottom: calc(var(--nav-height) + var(--nav-bottom-offset) + var(--space-3xl));
+  }
+
+  .tools-header {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .tools-title {
+    font-size: var(--text-xl);
+    font-weight: 600;
+  }
+
+  .tools-group {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .tools-category {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: var(--space-lg);
+  }
+
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-md);
+  }
+
+  .tool-card {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition:
+      border-color var(--duration-fast) var(--ease-out),
+      box-shadow var(--duration-fast) var(--ease-out);
+  }
+
+  .tool-card:hover {
+    border-color: var(--color-text-muted);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .tool-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .tool-info {
+    min-width: 0;
+  }
+
+  .tool-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--text-base);
+    font-weight: 500;
+    color: var(--color-text-primary);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  a.tool-name:hover {
+    color: var(--color-accent);
+  }
+
+  .tool-arrow {
+    flex-shrink: 0;
+    opacity: 0.4;
+    transition: opacity var(--duration-fast) var(--ease-out);
+  }
+
+  a.tool-name:hover .tool-arrow {
+    opacity: 1;
+  }
+
+  .tool-description {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-normal);
+    margin-top: var(--space-xs);
+  }
+
+  .tools-empty {
+    text-align: center;
+    padding: var(--space-3xl) 0;
+  }
+
+  @media (max-width: 768px) {
+    .tools-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

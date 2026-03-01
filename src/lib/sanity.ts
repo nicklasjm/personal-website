@@ -160,6 +160,16 @@ export interface SocialLink {
   url: string;
 }
 
+export interface Tool {
+  _id: string;
+  name: string;
+  description?: string;
+  category: "design" | "development" | "productivity" | "communication" | "other";
+  url?: string;
+  icon?: SanityImage;
+  order?: number;
+}
+
 // ─── Queries ─────────────────────────────────────────────────────────────────
 
 async function safeFetch<T>(query: string, params?: Record<string, unknown>): Promise<T | null> {
@@ -332,6 +342,25 @@ export async function getCVData(): Promise<CVData | null> {
         year
       }
     }`,
+  );
+}
+
+export async function getAllTools(): Promise<Tool[]> {
+  return (
+    (await safeFetch<Tool[]>(
+      `*[_type == "tool"] | order(category asc, order asc, name asc){
+      _id,
+      name,
+      description,
+      category,
+      url,
+      icon{
+        ...,
+        asset->
+      },
+      order
+    }`,
+    )) ?? []
   );
 }
 

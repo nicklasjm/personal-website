@@ -15,18 +15,10 @@ function formatDate(dateStr?: string) {
 <Base title="CV — Nicklas Jakobsen" description="Experience, education, skills, and more.">
   <section class="cv container">
     <header class="cv-header animate-in">
-      <div class="cv-header-top">
-        <h1 class="cv-title">CV</h1>
-        <button class="cv-download-btn" type="button" id="download-cv">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8 2v9M4 8l4 4 4-4" /><line x1="2" y1="14" x2="14" y2="14" />
-          </svg>
-          Download PDF
-        </button>
-      </div>
+      <h1 class="cv-title">CV</h1>
     </header>
 
-    <div id="cv-content" class="cv-content">
+    <div class="cv-content">
       {
         cv && (
           <>
@@ -253,6 +245,9 @@ function formatDate(dateStr?: string) {
   .cv {
     padding-top: var(--space-3xl);
     padding-bottom: calc(var(--nav-height) + var(--nav-bottom-offset) + var(--space-3xl));
+  }
+
+  .cv-content {
     max-width: 720px;
   }
 
@@ -260,39 +255,9 @@ function formatDate(dateStr?: string) {
     margin-bottom: var(--space-2xl);
   }
 
-  .cv-header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
-  }
-
   .cv-title {
     font-size: var(--text-xl);
     font-weight: 600;
-  }
-
-  .cv-download-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
-    padding: 8px 16px;
-    font-size: var(--text-sm);
-    font-weight: 500;
-    color: var(--color-text-secondary);
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-full);
-    cursor: pointer;
-    transition:
-      background-color var(--duration-fast) var(--ease-out),
-      color var(--duration-fast) var(--ease-out),
-      border-color var(--duration-fast) var(--ease-out);
-  }
-
-  .cv-download-btn:hover {
-    color: var(--color-text-primary);
-    border-color: var(--color-text-muted);
   }
 
   .cv-section {
@@ -522,42 +487,3 @@ function formatDate(dateStr?: string) {
   }
 </style>
 
-<script>
-  const downloadBtn = document.getElementById("download-cv");
-
-  downloadBtn?.addEventListener("click", async () => {
-    downloadBtn.textContent = "Generating...";
-    downloadBtn.setAttribute("disabled", "true");
-
-    try {
-      // Dynamically import html2pdf.js
-      const html2pdf = (await import("html2pdf.js")).default;
-      const element = document.getElementById("cv-content");
-
-      if (!element) return;
-
-      const opt = {
-        margin: [12, 16, 12, 16],
-        filename: "Nicklas-Jakobsen-CV.pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: "#fafbfc",
-        },
-        jsPDF: {
-          unit: "mm",
-          format: "a4",
-          orientation: "portrait" as const,
-        },
-      };
-
-      await html2pdf().set(opt).from(element).save();
-    } catch (err) {
-      console.error("PDF generation failed:", err);
-    } finally {
-      downloadBtn.textContent = "Download PDF";
-      downloadBtn.removeAttribute("disabled");
-    }
-  });
-</script>

@@ -52,27 +52,25 @@ const date = new Date(post.publishedAt).toLocaleDateString("en-DK", {
   >
     {thumbSrc && (
       <div class="post-card-media">
-        <div class="video-hover-wrapper">
-          <img
-            src={thumbSrc}
-            srcset={posterSrcSet || undefined}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
-            alt={post.featuredImage?.alt || post.title}
-            loading="lazy"
-            decoding="async"
-            class="post-card-poster"
+        <img
+          src={thumbSrc}
+          srcset={posterSrcSet || undefined}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
+          alt={post.featuredImage?.alt || post.title}
+          loading="lazy"
+          decoding="async"
+          class="post-card-poster"
+        />
+        {videoUrl && (
+          <video
+            src={videoUrl}
+            muted
+            loop
+            playsinline
+            preload="metadata"
+            class="post-card-video"
           />
-          {videoUrl && (
-            <video
-              src={videoUrl}
-              muted
-              loop
-              playsinline
-              preload="metadata"
-              class="post-card-video"
-            />
-          )}
-        </div>
+        )}
       </div>
     )}
     <div class="post-card-info">
@@ -111,22 +109,14 @@ const date = new Date(post.publishedAt).toLocaleDateString("en-DK", {
     background: var(--color-bg-elevated);
   }
 
-  .video-hover-wrapper {
-    position: relative;
-    width: 100%;
-    height: 100%;
-  }
-
   .post-card-poster {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    position: relative;
-    z-index: 1;
     transition: transform var(--duration-slow) var(--ease-out);
   }
 
-  .post-card-link:hover .post-card-poster {
+  .post-card:hover .post-card-poster {
     transform: scale(1.02);
   }
 
@@ -137,16 +127,14 @@ const date = new Date(post.publishedAt).toLocaleDateString("en-DK", {
     height: 100%;
     object-fit: cover;
     opacity: 0;
-    z-index: 2;
-    pointer-events: none;
-    transition: opacity var(--duration-slow) var(--ease-out);
+    transition:
+      opacity var(--duration-slow) var(--ease-out),
+      transform var(--duration-slow) var(--ease-out);
   }
 
-  .post-card-video.is-playing {
+  /* Pure CSS: fade in the video on card hover */
+  .post-card:hover .post-card-video {
     opacity: 1;
-  }
-
-  .post-card-link:hover .post-card-video.is-playing {
     transform: scale(1.02);
   }
 
@@ -184,32 +172,23 @@ const date = new Date(post.publishedAt).toLocaleDateString("en-DK", {
 </style>
 
 <script>
-  document.querySelectorAll<HTMLElement>(".video-hover-wrapper").forEach((wrapper) => {
-    const video = wrapper.querySelector<HTMLVideoElement>(".post-card-video");
-    if (!video) return;
+  // Minimal JS: play/pause on hover (only on hover-capable devices)
+  if (window.matchMedia("(hover: hover)").matches) {
+    document.querySelectorAll<HTMLElement>(".post-card-media").forEach((media) => {
+      const video = media.querySelector<HTMLVideoElement>("video");
+      if (!video) return;
 
-    const card = wrapper.closest(".post-card");
-    if (!card) return;
+      const card = media.closest<HTMLElement>(".post-card");
+      if (!card) return;
 
-    video.muted = true;
+      card.addEventListener("mouseenter", () => {
+        video.play().catch(() => {});
+      });
 
-    let hovering = false;
-
-    video.addEventListener("playing", () => {
-      if (hovering) video.classList.add("is-playing");
+      card.addEventListener("mouseleave", () => {
+        video.pause();
+        video.currentTime = 0;
+      });
     });
-
-    card.addEventListener("mouseenter", () => {
-      hovering = true;
-      video.play().catch(() => {});
-      if (!video.paused) video.classList.add("is-playing");
-    });
-
-    card.addEventListener("mouseleave", () => {
-      hovering = false;
-      video.classList.remove("is-playing");
-      video.pause();
-      video.currentTime = 0;
-    });
-  });
+  }
 </script>
