@@ -8,10 +8,15 @@ const contact = await getContact();
   <div class="contact-tooltip-inner">
     {
       contact?.email && (
-        <a href={`mailto:${contact.email}`} class="contact-row">
+        <button
+          type="button"
+          class="contact-row"
+          data-copy-email={contact.email}
+          aria-label={`Copy email address ${contact.email}`}
+        >
           <span class="contact-label">Email</span>
           <span class="contact-value">{contact.email}</span>
-        </a>
+        </button>
       )
     }
     {
@@ -88,6 +93,14 @@ const contact = await getContact();
     border-radius: var(--radius-md);
     text-decoration: none;
     transition: background-color var(--duration-fast) var(--ease-out);
+    /* Button reset */
+    border: none;
+    background: none;
+    width: 100%;
+    font: inherit;
+    color: inherit;
+    text-align: inherit;
+    cursor: pointer;
   }
 
   .contact-row:hover {
@@ -103,6 +116,15 @@ const contact = await getContact();
     font-size: var(--text-sm);
     color: var(--color-text-primary);
     font-weight: 500;
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .contact-row.is-copied .contact-value {
+    color: hsl(142, 50%, 45%);
+  }
+
+  [data-theme="dark"] .contact-row.is-copied .contact-value {
+    color: hsl(142, 60%, 55%);
   }
 
   .contact-availability {
@@ -136,3 +158,37 @@ const contact = await getContact();
     background: var(--color-text-muted);
   }
 </style>
+
+<script>
+  const copyBtn = document.querySelector<HTMLButtonElement>("[data-copy-email]");
+
+  if (copyBtn) {
+    copyBtn.addEventListener("click", async () => {
+      const email = copyBtn.dataset.copyEmail ?? "";
+
+      try {
+        await navigator.clipboard.writeText(email);
+      } catch {
+        // Fallback for older browsers or insecure contexts
+        const ta = document.createElement("textarea");
+        ta.value = email;
+        ta.style.cssText = "position:fixed;left:-9999px;top:-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
+
+      const valueEl = copyBtn.querySelector<HTMLElement>(".contact-value");
+      if (valueEl) {
+        const original = valueEl.textContent;
+        valueEl.textContent = "Copied e-mail address";
+        copyBtn.classList.add("is-copied");
+        setTimeout(() => {
+          valueEl.textContent = original;
+          copyBtn.classList.remove("is-copied");
+        }, 2000);
+      }
+    });
+  }
+</script>
