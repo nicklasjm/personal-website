@@ -29,12 +29,51 @@ const cursorProjects = allPosts
     </div>
   </section>
 
-  <!-- Cursor follower — positioned via JS, hidden by default -->
+  <!-- Cursor follower — positioned via JS, hidden by default (desktop hover only) -->
   <div id="cursor-project" class="cursor-project" aria-hidden="true">
+    <!-- Cursor arrow — shows current pointer position when system cursor is hidden -->
+    <svg
+      class="cursor-arrow"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 9 15"
+      width="14"
+      height="20"
+      aria-hidden="true"
+    >
+      <path
+        d="M0 0 L0 12 L3.5 9 L5.5 14 L7 13 L4.5 8 L8.5 8 Z"
+        fill="currentColor"
+        stroke="white"
+        stroke-width="0.8"
+        stroke-linejoin="round"
+      ></path>
+    </svg>
     <div class="cursor-project-image-wrap">
-      <img class="cursor-project-image" src="" alt="" />
+      <img class="cursor-project-image" src="" alt="" loading="eager" />
     </div>
     <span class="cursor-project-title"></span>
+  </div>
+
+  <!--
+    Attached project card — shown in desktop safe zone (near bottom nav / theme toggle).
+    Gives users a "normal" cursor + project preview when navigating to UI controls.
+  -->
+  <div id="attached-project" class="attached-project" aria-hidden="true">
+    <div class="attached-project-image-wrap">
+      <img class="attached-project-image" src="" alt="" loading="lazy" />
+    </div>
+    <span class="attached-project-title"></span>
+  </div>
+
+  <!--
+    Mobile project card — shown on first touch / scroll on touch devices.
+    Auto-cycles through projects every 3 s.
+  -->
+  <div id="mobile-project" class="mobile-project" aria-hidden="true">
+    <div class="mobile-project-image-wrap">
+      <img class="mobile-project-image" src="" alt="" loading="lazy" />
+    </div>
+    <span class="mobile-project-title"></span>
   </div>
 </Base>
 
@@ -67,7 +106,8 @@ const cursorProjects = allPosts
     white-space: pre-line;
   }
 
-  /* Cursor follower */
+  /* ── Desktop cursor follower ────────────────────────────────────── */
+
   .cursor-project {
     position: fixed;
     top: 0;
@@ -77,14 +117,27 @@ const cursorProjects = allPosts
     opacity: 0;
     transition: opacity var(--duration-slow) var(--ease-out);
     will-change: left, top;
+    display: flex;
+    flex-direction: column;
   }
 
   .cursor-project.is-visible {
     opacity: 1;
   }
 
+  /* Cursor arrow SVG — sits at the exact cursor position */
+  .cursor-arrow {
+    display: block;
+    color: var(--color-text-primary);
+    flex-shrink: 0;
+    margin-bottom: 6px;
+    /* White glow for visibility on any background */
+    filter: drop-shadow(0 0 3px hsla(0, 0%, 100%, 0.9))
+      drop-shadow(0 1px 4px hsla(0, 0%, 0%, 0.25));
+  }
+
   .cursor-project-image-wrap {
-    width: 220px;
+    width: 200px;
     aspect-ratio: 16 / 10;
     border-radius: var(--radius-md);
     overflow: hidden;
@@ -103,16 +156,129 @@ const cursorProjects = allPosts
     margin-top: var(--space-xs);
     font-size: var(--text-xs);
     color: var(--color-text-secondary);
-    text-align: center;
-    max-width: 220px;
+    text-align: left;
+    max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  /* Hide on touch / small screens */
+  /* ── Desktop attached project (safe zone) ───────────────────────── */
+
+  .attached-project {
+    position: fixed;
+    bottom: calc(var(--nav-height) + var(--nav-bottom-offset) + var(--space-xl));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-slow) var(--ease-out);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .attached-project.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .attached-project-image-wrap {
+    width: 180px;
+    aspect-ratio: 16 / 10;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--color-bg-elevated);
+    box-shadow: var(--shadow-lg);
+    transition: transform var(--duration-fast) var(--ease-out);
+  }
+
+  .attached-project:hover .attached-project-image-wrap {
+    transform: scale(1.03);
+  }
+
+  .attached-project-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .attached-project-title {
+    display: block;
+    margin-top: var(--space-xs);
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+    text-align: center;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ── Mobile project card ────────────────────────────────────────── */
+
+  .mobile-project {
+    position: fixed;
+    bottom: calc(var(--nav-height) + var(--nav-bottom-offset) + var(--space-xl));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-slow) var(--ease-out);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .mobile-project.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .mobile-project-image-wrap {
+    width: 200px;
+    aspect-ratio: 16 / 10;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--color-bg-elevated);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .mobile-project-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .mobile-project-title {
+    display: block;
+    margin-top: var(--space-xs);
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+    text-align: center;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ── Visibility rules per input method ──────────────────────────── */
+
+  /* Hide cursor follower + attached project on touch/small screens */
   @media (hover: none), (max-width: 768px) {
-    .cursor-project {
+    .cursor-project,
+    .attached-project {
+      display: none;
+    }
+  }
+
+  /* Hide mobile card on pointer/hover-capable devices */
+  @media (hover: hover) and (min-width: 769px) {
+    .mobile-project {
       display: none;
     }
   }
@@ -121,6 +287,7 @@ const cursorProjects = allPosts
 <script>
   const hero = document.querySelector<HTMLElement>(".hero");
   const follower = document.getElementById("cursor-project");
+  const attachedProject = document.getElementById("attached-project");
 
   if (hero && follower && window.matchMedia("(hover: hover)").matches) {
     const raw = hero.dataset.cursorProjects;
@@ -129,6 +296,8 @@ const cursorProjects = allPosts
     if (projects.length > 0) {
       const img = follower.querySelector<HTMLImageElement>(".cursor-project-image")!;
       const titleEl = follower.querySelector<HTMLElement>(".cursor-project-title")!;
+      const attachedImg = attachedProject?.querySelector<HTMLImageElement>(".attached-project-image");
+      const attachedTitleEl = attachedProject?.querySelector<HTMLElement>(".attached-project-title");
 
       // Shuffle (Fisher–Yates)
       for (let i = projects.length - 1; i > 0; i--) {
@@ -147,11 +316,26 @@ const cursorProjects = allPosts
       let raf = 0;
       let isInHero = false;
 
+      // Safe zone thresholds (px from viewport edge)
+      const BOTTOM_SAFE_PX = 110; // covers nav + breathing room
+      const CORNER_SAFE_PX = 80;  // top-right corner (theme toggle)
+
+      function isInSafeZone(x: number, y: number): boolean {
+        const fromBottom = window.innerHeight - y;
+        const fromTop = y;
+        const fromRight = window.innerWidth - x;
+        return fromBottom < BOTTOM_SAFE_PX || (fromTop < CORNER_SAFE_PX && fromRight < CORNER_SAFE_PX);
+      }
+
       function showProject(index: number) {
         const p = projects[index];
         img.src = p.image;
         titleEl.textContent = p.title;
         follower.dataset.href = p.href;
+        // Keep attached card in sync
+        if (attachedImg) attachedImg.src = p.image;
+        if (attachedTitleEl) attachedTitleEl.textContent = p.title;
+        if (attachedProject) attachedProject.dataset.href = p.href;
       }
 
       // Preload first project
@@ -182,13 +366,20 @@ const cursorProjects = allPosts
         follower.style.top = currentY + "px";
 
         isInHero = true;
-        follower.classList.add("is-visible");
         raf = requestAnimationFrame(animate);
+
+        // Only hide system cursor / show follower when outside safe zone
+        if (!isInSafeZone(e.clientX, e.clientY)) {
+          hero.style.cursor = "none";
+          follower.classList.add("is-visible");
+        }
       });
 
       hero.addEventListener("mouseleave", () => {
         isInHero = false;
+        hero.style.cursor = "";
         follower.classList.remove("is-visible");
+        if (attachedProject) attachedProject.classList.remove("is-visible");
         cancelAnimationFrame(raf);
       });
 
@@ -196,7 +387,29 @@ const cursorProjects = allPosts
         targetX = e.clientX;
         targetY = e.clientY;
 
-        // Track distance for cycling
+        const inSafe = isInSafeZone(e.clientX, e.clientY);
+
+        if (inSafe) {
+          // Restore cursor so user can click nav / theme toggle
+          hero.style.cursor = "auto";
+          follower.classList.remove("is-visible");
+
+          // Show attached project only in the bottom safe zone (not top-right corner)
+          const fromBottom = window.innerHeight - e.clientY;
+          if (attachedProject) {
+            if (fromBottom < BOTTOM_SAFE_PX) {
+              attachedProject.classList.add("is-visible");
+            } else {
+              attachedProject.classList.remove("is-visible");
+            }
+          }
+        } else {
+          hero.style.cursor = "none";
+          follower.classList.add("is-visible");
+          if (attachedProject) attachedProject.classList.remove("is-visible");
+        }
+
+        // Track movement distance for cycling
         const dx = e.clientX - lastX;
         const dy = e.clientY - lastY;
         distance += Math.sqrt(dx * dx + dy * dy);
@@ -211,15 +424,74 @@ const cursorProjects = allPosts
         }
       });
 
-      hero.addEventListener("click", () => {
-        const href = follower.dataset.href;
-        if (href) {
-          window.location.href = href;
+      // Click follower or attached project to navigate
+      hero.addEventListener("click", (e) => {
+        const inSafe = isInSafeZone(e.clientX, e.clientY);
+        if (!inSafe) {
+          const href = follower.dataset.href;
+          if (href) window.location.href = href;
         }
       });
 
-      // Use pointer cursor within hero to indicate clickability
-      hero.style.cursor = "none";
+      attachedProject?.addEventListener("click", () => {
+        const href = attachedProject.dataset.href;
+        if (href) window.location.href = href;
+      });
+    }
+  }
+
+  // ── Mobile: show project card on first touch / scroll ─────────────────────
+  const mobileCard = document.getElementById("mobile-project");
+
+  if (mobileCard && !window.matchMedia("(hover: hover)").matches) {
+    const raw = document.querySelector<HTMLElement>(".hero")?.dataset.cursorProjects;
+    const projects: { title: string; href: string; image: string }[] = raw ? JSON.parse(raw) : [];
+
+    if (projects.length > 0) {
+      const mImg = mobileCard.querySelector<HTMLImageElement>(".mobile-project-image")!;
+      const mTitle = mobileCard.querySelector<HTMLElement>(".mobile-project-title")!;
+
+      // Shuffle
+      for (let i = projects.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [projects[i], projects[j]] = [projects[j], projects[i]];
+      }
+
+      let idx = 0;
+
+      function showMobile(index: number) {
+        const p = projects[index];
+        mImg.src = p.image;
+        mTitle.textContent = p.title;
+        mobileCard!.dataset.href = p.href;
+      }
+
+      // Preload first image before user interacts
+      showMobile(0);
+
+      let hasAppeared = false;
+      let cycleTimer = 0;
+
+      function appear() {
+        if (hasAppeared) return;
+        hasAppeared = true;
+        mobileCard!.classList.add("is-visible");
+
+        // Auto-cycle every 3 s using requestAnimationFrame-friendly timer
+        cycleTimer = window.setInterval(() => {
+          idx = (idx + 1) % projects.length;
+          showMobile(idx);
+        }, 3000);
+      }
+
+      // Passive listeners for performance — do not block scroll
+      window.addEventListener("touchstart", appear, { passive: true, once: true });
+      window.addEventListener("scroll", appear, { passive: true, once: true });
+
+      mobileCard.addEventListener("click", () => {
+        const href = mobileCard.dataset.href;
+        if (href) window.location.href = href;
+      });
     }
   }
 </script>
