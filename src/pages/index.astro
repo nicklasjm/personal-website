@@ -7,7 +7,7 @@ const heroText =
   settings?.heroText ||
   "Junior Digital Designer at Kontrapunkt in Copenhagen.\nFocusing on system design, optimization, and aesthetic design.";
 
-// Build lightweight project data for the cursor feature
+// Build lightweight project data for the cursor/touch feature
 const allPosts = await getAllPosts();
 const cursorProjects = allPosts
   .filter((p) => p.featuredImage)
@@ -29,7 +29,7 @@ const cursorProjects = allPosts
     </div>
   </section>
 
-  <!-- Cursor follower — positioned via JS, hidden by default -->
+  <!-- Project follower — hidden by default, positioned via JS with translate3d -->
   <div id="cursor-project" class="cursor-project" aria-hidden="true">
     <div class="cursor-project-image-wrap">
       <img class="cursor-project-image" src="" alt="" />
@@ -38,49 +38,34 @@ const cursorProjects = allPosts
   </div>
 </Base>
 
-<style>
-  .hero {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100dvh;
-    padding: var(--grid-margin);
-    padding-bottom: calc(var(--nav-height) + var(--nav-bottom-offset) + var(--space-2xl));
-  }
-
-  .hero-content {
-    max-width: 480px;
-    text-align: center;
-  }
-
-  .hero-name {
-    font-size: var(--text-sm);
-    color: var(--color-text-muted);
-    letter-spacing: 0.02em;
-    margin-bottom: var(--space-md);
-  }
-
-  .hero-text {
-    font-size: var(--text-lg);
-    color: var(--color-text-secondary);
-    line-height: var(--leading-relaxed);
-    white-space: pre-line;
-  }
-
-  /* Cursor follower */
+<style is:global>
+  /* ── Project follower ──────────────────────────────────────────────
+     Using is:global to guarantee styles apply regardless of Astro
+     scoping on slotted content. See .cursor-trail-knowledge.md.
+     ─────────────────────────────────────────────────────────────── */
   .cursor-project {
     position: fixed;
     top: 0;
     left: 0;
     z-index: 50;
     pointer-events: none;
+    will-change: transform;
+    backface-visibility: hidden;
+
+    /* Triple-layer hide: invisible before JS runs */
     opacity: 0;
-    transition: opacity var(--duration-slow) var(--ease-out);
-    will-change: left, top;
+    visibility: hidden;
+    transform: translate3d(-9999px, -9999px, 0);
+
+    transition:
+      opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+      visibility 0.3s;
   }
 
   .cursor-project.is-visible {
     opacity: 1;
+    visibility: visible;
+    /* transform is controlled by JS — don't set it here */
   }
 
   .cursor-project-image-wrap {
@@ -110,25 +95,78 @@ const cursorProjects = allPosts
     white-space: nowrap;
   }
 
-  /* Hide on touch / small screens */
-  @media (hover: none), (max-width: 768px) {
-    .cursor-project {
-      display: none;
+  /* Smaller card on mobile */
+  @media (max-width: 768px) {
+    .cursor-project-image-wrap {
+      width: 160px;
+    }
+    .cursor-project-title {
+      max-width: 160px;
     }
   }
 </style>
 
+<style>
+  .hero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100dvh;
+    padding: var(--grid-margin);
+    padding-bottom: calc(var(--nav-height) + var(--nav-bottom-offset) + var(--space-2xl));
+  }
+
+  .hero-content {
+    max-width: 480px;
+    text-align: center;
+  }
+
+  .hero-name {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    letter-spacing: 0.02em;
+    margin-bottom: var(--space-md);
+  }
+
+  .hero-text {
+    font-size: var(--text-lg);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+    white-space: pre-line;
+  }
+</style>
+
 <script>
+  /**
+   * Project preview follower — desktop (cursor) + mobile (touch).
+   * See .cursor-trail-knowledge.md for rationale.
+   *
+   * Desktop: image follows mouse with lerp smoothing, cursor hidden.
+   * Mobile:  image appears above touch point, tap navigates to project.
+   *
+   * Key decisions:
+   * - translate3d for GPU compositing (never left/top)
+   * - Lerp smoothing with idle detection on desktop
+   * - Triple-layer CSS hide (opacity + visibility + off-screen transform)
+   * - is:global styles to avoid Astro scoping issues on slotted elements
+   */
+
   const hero = document.querySelector<HTMLElement>(".hero");
   const follower = document.getElementById("cursor-project");
 
-  if (hero && follower && window.matchMedia("(hover: hover)").matches) {
+  if (hero && follower) {
     const raw = hero.dataset.cursorProjects;
-    const projects: { title: string; href: string; image: string }[] = raw ? JSON.parse(raw) : [];
+    const projects: { title: string; href: string; image: string }[] = raw
+      ? JSON.parse(raw)
+      : [];
 
     if (projects.length > 0) {
-      const img = follower.querySelector<HTMLImageElement>(".cursor-project-image")!;
-      const titleEl = follower.querySelector<HTMLElement>(".cursor-project-title")!;
+      const img = follower.querySelector<HTMLImageElement>(
+        ".cursor-project-image",
+      )!;
+      const titleEl = follower.querySelector<HTMLElement>(
+        ".cursor-project-title",
+      )!;
 
       // Shuffle (Fisher–Yates)
       for (let i = projects.length - 1; i > 0; i--) {
@@ -138,14 +176,6 @@ const cursorProjects = allPosts
 
       let currentIndex = 0;
       let distance = 0;
-      let lastX = 0;
-      let lastY = 0;
-      let targetX = 0;
-      let targetY = 0;
-      let currentX = 0;
-      let currentY = 0;
-      let raf = 0;
-      let isInHero = false;
 
       function showProject(index: number) {
         const p = projects[index];
@@ -154,72 +184,166 @@ const cursorProjects = allPosts
         follower.dataset.href = p.href;
       }
 
+      function advanceProject() {
+        currentIndex = (currentIndex + 1) % projects.length;
+        showProject(currentIndex);
+      }
+
       // Preload first project
       showProject(0);
 
-      function lerp(a: number, b: number, t: number) {
-        return a + (b - a) * t;
-      }
+      const isDesktop = window.matchMedia("(hover: hover)").matches;
 
-      function animate() {
-        currentX = lerp(currentX, targetX, 0.12);
-        currentY = lerp(currentY, targetY, 0.12);
-        follower.style.left = currentX + "px";
-        follower.style.top = currentY + "px";
+      if (isDesktop) {
+        // ── Desktop: cursor follower with lerp ───────────────────────
+        let lastX = 0;
+        let lastY = 0;
+        let targetX = 0;
+        let targetY = 0;
+        let currentX = -9999;
+        let currentY = -9999;
+        let raf = 0;
+        let isInHero = false;
 
-        if (isInHero) {
-          raf = requestAnimationFrame(animate);
+        const SPEED = 0.12;
+        const THRESHOLD = 0.5;
+
+        function lerp(a: number, b: number, t: number) {
+          return a + (b - a) * t;
         }
-      }
 
-      hero.addEventListener("mouseenter", (e) => {
-        // Snap to initial position (no lerp lag)
-        currentX = targetX = e.clientX;
-        currentY = targetY = e.clientY;
-        lastX = e.clientX;
-        lastY = e.clientY;
-        follower.style.left = currentX + "px";
-        follower.style.top = currentY + "px";
+        function animate() {
+          currentX = lerp(currentX, targetX, SPEED);
+          currentY = lerp(currentY, targetY, SPEED);
+          follower.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
 
-        isInHero = true;
-        follower.classList.add("is-visible");
-        raf = requestAnimationFrame(animate);
-      });
+          const dx = Math.abs(targetX - currentX);
+          const dy = Math.abs(targetY - currentY);
 
-      hero.addEventListener("mouseleave", () => {
-        isInHero = false;
-        follower.classList.remove("is-visible");
-        cancelAnimationFrame(raf);
-      });
+          if (isInHero && (dx > THRESHOLD || dy > THRESHOLD)) {
+            raf = requestAnimationFrame(animate);
+          } else if (isInHero) {
+            currentX = targetX;
+            currentY = targetY;
+            follower.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+            raf = 0;
+          }
+        }
 
-      hero.addEventListener("mousemove", (e) => {
-        targetX = e.clientX;
-        targetY = e.clientY;
-
-        // Track distance for cycling
-        const dx = e.clientX - lastX;
-        const dy = e.clientY - lastY;
-        distance += Math.sqrt(dx * dx + dy * dy);
-        lastX = e.clientX;
-        lastY = e.clientY;
-
-        // Advance to next project every 300px of movement
-        if (distance > 300) {
+        hero.addEventListener("mouseenter", (e) => {
+          currentX = targetX = e.clientX;
+          currentY = targetY = e.clientY;
+          lastX = e.clientX;
+          lastY = e.clientY;
           distance = 0;
-          currentIndex = (currentIndex + 1) % projects.length;
-          showProject(currentIndex);
-        }
-      });
+          follower.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
 
-      hero.addEventListener("click", () => {
-        const href = follower.dataset.href;
-        if (href) {
-          window.location.href = href;
-        }
-      });
+          isInHero = true;
+          follower.classList.add("is-visible");
+          if (!raf) raf = requestAnimationFrame(animate);
+        });
 
-      // Use pointer cursor within hero to indicate clickability
-      hero.style.cursor = "none";
+        hero.addEventListener("mouseleave", () => {
+          isInHero = false;
+          follower.classList.remove("is-visible");
+          if (raf) {
+            cancelAnimationFrame(raf);
+            raf = 0;
+          }
+        });
+
+        hero.addEventListener("mousemove", (e) => {
+          targetX = e.clientX;
+          targetY = e.clientY;
+
+          const dx = e.clientX - lastX;
+          const dy = e.clientY - lastY;
+          distance += Math.sqrt(dx * dx + dy * dy);
+          lastX = e.clientX;
+          lastY = e.clientY;
+
+          if (distance > 300) {
+            distance = 0;
+            advanceProject();
+          }
+
+          if (!raf && isInHero) {
+            raf = requestAnimationFrame(animate);
+          }
+        });
+
+        hero.addEventListener("click", () => {
+          const href = follower.dataset.href;
+          if (href) window.location.href = href;
+        });
+
+        hero.style.cursor = "none";
+      } else {
+        // ── Mobile: touch-based project preview ──────────────────────
+        // Image appears offset above the touch point so the finger
+        // doesn't obscure it. Each new touch cycles the project.
+        // Lifting the finger navigates to the shown project.
+
+        const OFFSET_Y = -180; // px above the touch point
+
+        let touchActive = false;
+        let touchTimer = 0;
+
+        hero.addEventListener(
+          "touchstart",
+          (e) => {
+            // Ignore if touch is on the hero-content text (let links work)
+            const target = e.target as HTMLElement;
+            if (target.closest("a")) return;
+
+            const touch = e.touches[0];
+            const x = touch.clientX;
+            const y = touch.clientY;
+
+            // Position above the finger
+            follower.style.transform = `translate3d(${x}px, ${y + OFFSET_Y}px, 0)`;
+            follower.classList.add("is-visible");
+            touchActive = true;
+
+            // Cycle to next project on each new touch
+            advanceProject();
+
+            // Clear any pending hide timer
+            clearTimeout(touchTimer);
+          },
+          { passive: true },
+        );
+
+        hero.addEventListener(
+          "touchmove",
+          (e) => {
+            if (!touchActive) return;
+            const touch = e.touches[0];
+            follower.style.transform = `translate3d(${touch.clientX}px, ${touch.clientY + OFFSET_Y}px, 0)`;
+          },
+          { passive: true },
+        );
+
+        hero.addEventListener(
+          "touchend",
+          (e) => {
+            if (!touchActive) return;
+            touchActive = false;
+
+            // Navigate to the shown project
+            const href = follower.dataset.href;
+            if (href) {
+              window.location.href = href;
+            }
+
+            // Fade out after a short delay
+            touchTimer = window.setTimeout(() => {
+              follower.classList.remove("is-visible");
+            }, 200);
+          },
+          { passive: true },
+        );
+      }
     }
   }
 </script>
