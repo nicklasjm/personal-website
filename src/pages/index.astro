@@ -1,20 +1,41 @@
 ---
 import Base from "@/layouts/Base.astro";
-import { getSettings } from "@/lib/sanity";
+import { getSettings, getAllPosts, optimizedUrl } from "@/lib/sanity";
 
 const settings = await getSettings();
 const heroText =
   settings?.heroText ||
   "Junior Digital Designer at Kontrapunkt in Copenhagen.\nFocusing on system design, optimization, and aesthetic design.";
+
+// Build lightweight project data for the cursor feature
+const allPosts = await getAllPosts();
+const cursorProjects = allPosts
+  .filter((p) => p.featuredImage)
+  .map((p) => ({
+    title: p.title,
+    href:
+      p.category === "links" && p.externalLink
+        ? p.externalLink
+        : `/feed/${p.slug.current}`,
+    image: optimizedUrl(p.featuredImage!, 600, { height: 375, fit: "crop" }),
+  }));
 ---
 
 <Base bodyClass="page-home">
-  <section class="hero">
+  <section class="hero" data-cursor-projects={JSON.stringify(cursorProjects)}>
     <div class="hero-content animate-in">
       <p class="hero-name">Nicklas Jakobsen</p>
       <p class="hero-text">{heroText}</p>
     </div>
   </section>
+
+  <!-- Cursor follower — positioned via JS, hidden by default -->
+  <div id="cursor-project" class="cursor-project" aria-hidden="true">
+    <div class="cursor-project-image-wrap">
+      <img class="cursor-project-image" src="" alt="" />
+    </div>
+    <span class="cursor-project-title"></span>
+  </div>
 </Base>
 
 <style>
@@ -45,4 +66,160 @@ const heroText =
     line-height: var(--leading-relaxed);
     white-space: pre-line;
   }
+
+  /* Cursor follower */
+  .cursor-project {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 50;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--duration-slow) var(--ease-out);
+    will-change: left, top;
+  }
+
+  .cursor-project.is-visible {
+    opacity: 1;
+  }
+
+  .cursor-project-image-wrap {
+    width: 220px;
+    aspect-ratio: 16 / 10;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--color-bg-elevated);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .cursor-project-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .cursor-project-title {
+    display: block;
+    margin-top: var(--space-xs);
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+    text-align: center;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Hide on touch / small screens */
+  @media (hover: none), (max-width: 768px) {
+    .cursor-project {
+      display: none;
+    }
+  }
 </style>
+
+<script>
+  const hero = document.querySelector<HTMLElement>(".hero");
+  const follower = document.getElementById("cursor-project");
+
+  if (hero && follower && window.matchMedia("(hover: hover)").matches) {
+    const raw = hero.dataset.cursorProjects;
+    const projects: { title: string; href: string; image: string }[] = raw ? JSON.parse(raw) : [];
+
+    if (projects.length > 0) {
+      const img = follower.querySelector<HTMLImageElement>(".cursor-project-image")!;
+      const titleEl = follower.querySelector<HTMLElement>(".cursor-project-title")!;
+
+      // Shuffle (Fisher–Yates)
+      for (let i = projects.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [projects[i], projects[j]] = [projects[j], projects[i]];
+      }
+
+      let currentIndex = 0;
+      let distance = 0;
+      let lastX = 0;
+      let lastY = 0;
+      let targetX = 0;
+      let targetY = 0;
+      let currentX = 0;
+      let currentY = 0;
+      let raf = 0;
+      let isInHero = false;
+
+      function showProject(index: number) {
+        const p = projects[index];
+        img.src = p.image;
+        titleEl.textContent = p.title;
+        follower.dataset.href = p.href;
+      }
+
+      // Preload first project
+      showProject(0);
+
+      function lerp(a: number, b: number, t: number) {
+        return a + (b - a) * t;
+      }
+
+      function animate() {
+        currentX = lerp(currentX, targetX, 0.12);
+        currentY = lerp(currentY, targetY, 0.12);
+        follower.style.left = currentX + "px";
+        follower.style.top = currentY + "px";
+
+        if (isInHero) {
+          raf = requestAnimationFrame(animate);
+        }
+      }
+
+      hero.addEventListener("mouseenter", (e) => {
+        // Snap to initial position (no lerp lag)
+        currentX = targetX = e.clientX;
+        currentY = targetY = e.clientY;
+        lastX = e.clientX;
+        lastY = e.clientY;
+        follower.style.left = currentX + "px";
+        follower.style.top = currentY + "px";
+
+        isInHero = true;
+        follower.classList.add("is-visible");
+        raf = requestAnimationFrame(animate);
+      });
+
+      hero.addEventListener("mouseleave", () => {
+        isInHero = false;
+        follower.classList.remove("is-visible");
+        cancelAnimationFrame(raf);
+      });
+
+      hero.addEventListener("mousemove", (e) => {
+        targetX = e.clientX;
+        targetY = e.clientY;
+
+        // Track distance for cycling
+        const dx = e.clientX - lastX;
+        const dy = e.clientY - lastY;
+        distance += Math.sqrt(dx * dx + dy * dy);
+        lastX = e.clientX;
+        lastY = e.clientY;
+
+        // Advance to next project every 300px of movement
+        if (distance > 300) {
+          distance = 0;
+          currentIndex = (currentIndex + 1) % projects.length;
+          showProject(currentIndex);
+        }
+      });
+
+      hero.addEventListener("click", () => {
+        const href = follower.dataset.href;
+        if (href) {
+          window.location.href = href;
+        }
+      });
+
+      // Use pointer cursor within hero to indicate clickability
+      hero.style.cursor = "none";
+    }
+  }
+</script>

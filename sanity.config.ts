@@ -5,6 +5,7 @@ import { post } from "./sanity/schemas/post";
 import { cv } from "./sanity/schemas/cv";
 import { siteSettings } from "./sanity/schemas/settings";
 import { contact } from "./sanity/schemas/contact";
+import { tool } from "./sanity/schemas/tool";
 
 export default defineConfig({
   name: "nicklasjakobsen",
@@ -34,11 +35,12 @@ export default defineConfig({
               .child(S.document().schemaType("cv").documentId("cv")),
             S.divider(),
             S.documentTypeListItem("post").title("Posts"),
+            S.documentTypeListItem("tool").title("Tools"),
           ]),
     }),
     visionTool(),
   ],
   schema: {
-    types: [post, cv, siteSettings, contact],
+    types: [post, cv, siteSettings, contact, tool],
   },
 });
