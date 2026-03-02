@@ -2,9 +2,14 @@
 import Base from "@/layouts/Base.astro";
 import PostCard from "@/components/PostCard.astro";
 import PostCardVideo from "@/components/PostCardVideo.astro";
+import BlueskyFeed from "@/components/BlueskyFeed.astro";
 import { getAllPosts } from "@/lib/sanity";
+import { getBlueskyPosts } from "@/lib/bluesky";
 
 const posts = await getAllPosts();
+
+const bskyHandle = import.meta.env.BLUESKY_HANDLE as string | undefined;
+const bskyPosts = bskyHandle ? await getBlueskyPosts(bskyHandle) : [];
 
 // Group posts by year
 const postsByYear = posts.reduce<Record<string, typeof posts>>((acc, post) => {
@@ -61,6 +66,10 @@ const categories = ["all", "work", "playground", "thoughts", "links", "photograp
     </div>
 
     {posts.length === 0 && <p class="feed-empty text-muted">No posts yet.</p>}
+
+    {bskyPosts.length > 0 && bskyHandle && (
+      <BlueskyFeed posts={bskyPosts} handle={bskyHandle} />
+    )}
   </section>
 </Base>
 
