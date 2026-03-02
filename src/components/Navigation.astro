@@ -32,6 +32,7 @@ const navLinks = [
         </a>
       ))
     }
+    <span class="nav-separator" aria-hidden="true"></span>
     <button
       class="nav-link nav-contact-btn"
       type="button"
@@ -39,6 +40,9 @@ const navLinks = [
       aria-controls="contact-tooltip"
     >
       Contact
+      <svg class="nav-contact-chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+        <polyline points="1.5,7 5,3 8.5,7" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+      </svg>
     </button>
   </div>
   <ContactTooltip />
@@ -126,8 +130,27 @@ const navLinks = [
     box-shadow: var(--shadow-sm);
   }
 
+  .nav-separator {
+    width: 1px;
+    height: 16px;
+    background: var(--color-border);
+    flex-shrink: 0;
+    margin-inline: 2px;
+  }
+
   .nav-contact-btn {
     cursor: pointer;
+    gap: 5px;
+  }
+
+  .nav-contact-chevron {
+    stroke: currentColor;
+    flex-shrink: 0;
+    transition: transform var(--duration-fast) var(--ease-out);
+  }
+
+  .nav-contact-btn[aria-expanded="true"] .nav-contact-chevron {
+    transform: rotate(180deg);
   }
 </style>
 
