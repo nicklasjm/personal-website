@@ -11,10 +11,6 @@ export const sanityClient = createClient({
 
 const builder = imageUrlBuilder(sanityClient);
 
-export function urlFor(source: SanityImageSource) {
-  return builder.image(source);
-}
-
 /**
  * Generate an optimized image URL with sensible defaults.
  * Applies auto format (AVIF/WebP negotiation), quality, and fit.

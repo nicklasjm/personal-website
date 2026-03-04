@@ -38,7 +38,7 @@ export function renderPortableText(blocks: PortableTextBlock[]): string {
 
           const caption = value.caption || "";
 
-          // VideoPlayer is a client component, so we output raw HTML that matches its structure
+          // Raw HTML enhanced by the video player script in feed/[slug].astro
           let html = `<figure class="video-player">`;
           html += `<div class="video-wrapper">`;
           html += `<video src="${videoUrl}"${posterUrl ? ` poster="${posterUrl}"` : ""} playsinline preload="metadata" class="video-element"><track kind="captions" /></video>`;
