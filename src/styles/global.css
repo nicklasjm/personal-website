@@ -301,7 +301,7 @@ button:focus-visible {
   border-radius: var(--radius-sm);
 }
 
-button:active {
+button:active:not([class*="carousel-"]):not([class*="lightbox-"]):not([class*="video-"]) {
   transform: scale(0.97);
 }
 
